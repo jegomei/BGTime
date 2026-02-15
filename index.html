@@ -15,27 +15,30 @@
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
             background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
             min-height: 100vh;
-            padding: 20px;
+            padding: 10px;
+            -webkit-text-size-adjust: 100%;
         }
 
         .container {
-            max-width: 800px;
+            max-width: 100%;
             margin: 0 auto;
             background: white;
             border-radius: 15px;
-            padding: 30px;
+            padding: 20px 15px;
             box-shadow: 0 10px 40px rgba(0,0,0,0.2);
         }
 
         h1 {
             text-align: center;
             color: #667eea;
-            margin-bottom: 30px;
+            margin-bottom: 20px;
+            font-size: 24px;
         }
 
         h2 {
             color: #764ba2;
-            margin-bottom: 20px;
+            margin-bottom: 15px;
+            font-size: 20px;
         }
 
         .screen {
@@ -108,11 +111,22 @@
 
         .player-input-row .player-color {
             width: 60px;
-            height: 45px;
+            height: 48px;
             border: 2px solid #ddd;
             border-radius: 8px;
             cursor: pointer;
             padding: 2px;
+            -webkit-appearance: none;
+            appearance: none;
+        }
+
+        .player-input-row .player-color::-webkit-color-swatch-wrapper {
+            padding: 2px;
+        }
+
+        .player-input-row .player-color::-webkit-color-swatch {
+            border: none;
+            border-radius: 6px;
         }
 
         .player-input-row .remove-player-btn {
@@ -123,39 +137,45 @@
             border-radius: 8px;
             cursor: pointer;
             font-size: 18px;
-            min-width: 45px;
+            min-width: 48px;
+            min-height: 48px;
         }
 
         button {
             background: #667eea;
             color: white;
             border: none;
-            padding: 12px 30px;
+            padding: 14px 24px;
             border-radius: 8px;
             font-size: 16px;
             cursor: pointer;
             transition: background 0.3s;
             margin-right: 10px;
+            margin-bottom: 10px;
+            min-height: 48px;
+            -webkit-tap-highlight-color: transparent;
         }
 
-        button:hover {
+        button:active {
             background: #5568d3;
+            transform: scale(0.98);
         }
 
         button.secondary {
             background: #95a5a6;
         }
 
-        button.secondary:hover {
+        button.secondary:active {
             background: #7f8c8d;
         }
 
         .add-player-btn {
             background: #2ecc71;
             margin-top: 10px;
+            width: 100%;
         }
 
-        .add-player-btn:hover {
+        .add-player-btn:active {
             background: #27ae60;
         }
 
@@ -208,24 +228,60 @@
             width: 100%;
             border-collapse: collapse;
             margin-top: 20px;
+            display: block;
+            overflow-x: auto;
+            -webkit-overflow-scrolling: touch;
+        }
+
+        .score-table thead,
+        .score-table tbody,
+        .score-table tr {
+            display: table;
+            width: 100%;
+            table-layout: fixed;
         }
 
         .score-table th,
         .score-table td {
-            padding: 12px;
+            padding: 10px 5px;
             border: 1px solid #ddd;
             text-align: center;
+            font-size: 14px;
+            min-width: 60px;
         }
 
         .score-table th {
             background: #667eea;
             color: white;
+            position: sticky;
+            top: 0;
+            z-index: 10;
         }
 
         .score-table input {
-            width: 80px;
-            padding: 8px;
+            width: 100%;
+            max-width: 70px;
+            padding: 8px 4px;
             text-align: center;
+            font-size: 16px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+        }
+
+        /* Primera columna fija en móvil */
+        .score-table td:first-child,
+        .score-table th:first-child {
+            position: sticky;
+            left: 0;
+            background: white;
+            z-index: 5;
+            font-weight: 600;
+            min-width: 80px;
+        }
+
+        .score-table th:first-child {
+            background: #667eea;
+            z-index: 15;
         }
 
         .scoring-item {
@@ -292,12 +348,11 @@
             background: white;
             border: 2px solid #667eea;
             border-radius: 10px;
-            padding: 20px;
+            padding: 15px;
             margin-bottom: 15px;
-            cursor: move;
             display: flex;
             align-items: center;
-            gap: 15px;
+            gap: 10px;
             transition: all 0.3s;
             box-shadow: 0 2px 5px rgba(0,0,0,0.1);
         }
@@ -307,35 +362,54 @@
             box-shadow: 0 4px 10px rgba(0,0,0,0.15);
         }
 
-        .order-item.dragging {
-            opacity: 0.5;
-            cursor: grabbing;
-        }
-
         .order-number {
             background: #667eea;
             color: white;
-            width: 40px;
-            height: 40px;
+            width: 35px;
+            height: 35px;
             border-radius: 50%;
             display: flex;
             align-items: center;
             justify-content: center;
-            font-size: 20px;
+            font-size: 18px;
             font-weight: bold;
             flex-shrink: 0;
         }
 
         .order-player-name {
-            font-size: 20px;
+            font-size: 18px;
             font-weight: 600;
             flex-grow: 1;
         }
 
-        .drag-handle {
-            font-size: 24px;
-            color: #95a5a6;
-            cursor: grab;
+        .order-controls {
+            display: flex;
+            flex-direction: column;
+            gap: 5px;
+        }
+
+        .order-btn {
+            background: #667eea;
+            color: white;
+            border: none;
+            width: 35px;
+            height: 35px;
+            border-radius: 8px;
+            font-size: 18px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 0;
+        }
+
+        .order-btn:active {
+            background: #5568d3;
+        }
+
+        .order-btn:disabled {
+            background: #ccc;
+            cursor: not-allowed;
         }
 
         .timer-fullscreen {
@@ -349,67 +423,63 @@
             justify-content: center;
             align-items: center;
             transition: background-color 0.5s ease;
-            padding: 40px;
+            padding: 20px;
         }
 
         .timer-info {
             position: absolute;
-            top: 30px;
+            top: 20px;
             left: 50%;
             transform: translateX(-50%);
             text-align: center;
+            width: 90%;
         }
 
         .game-name-timer {
-            font-size: 24px;
+            font-size: 18px;
             font-weight: 600;
             color: rgba(255,255,255,0.9);
-            margin-bottom: 10px;
+            margin-bottom: 8px;
         }
 
         .round-info {
-            font-size: 18px;
+            font-size: 16px;
             color: rgba(255,255,255,0.8);
         }
 
         .player-name-large {
-            font-size: 72px;
+            font-size: clamp(36px, 10vw, 72px);
             font-weight: bold;
             color: white;
             text-shadow: 0 4px 10px rgba(0,0,0,0.3);
-            margin-bottom: 30px;
+            margin-bottom: 20px;
             animation: fadeIn 0.5s ease;
-        }
-
-        @keyframes fadeIn {
-            from {
-                opacity: 0;
-                transform: translateY(-20px);
-            }
-            to {
-                opacity: 1;
-                transform: translateY(0);
-            }
+            text-align: center;
+            word-wrap: break-word;
+            max-width: 90%;
         }
 
         .time-display-large {
-            font-size: 120px;
+            font-size: clamp(60px, 20vw, 120px);
             font-weight: bold;
             color: white;
             font-family: 'Courier New', monospace;
             text-shadow: 0 6px 20px rgba(0,0,0,0.4);
-            margin-bottom: 50px;
-            letter-spacing: 10px;
+            margin-bottom: 30px;
+            letter-spacing: 5px;
         }
 
         .timer-controls {
             display: flex;
-            gap: 20px;
+            flex-direction: column;
+            gap: 12px;
             position: absolute;
-            bottom: 40px;
+            bottom: 20px;
             left: 50%;
             transform: translateX(-50%);
             z-index: 1000;
+            width: 90%;
+            max-width: 400px;
         }
 
         .timer-btn {
@@ -417,25 +487,26 @@
             backdrop-filter: blur(10px);
             border: 2px solid rgba(255,255,255,0.4);
             color: white;
-            padding: 20px 30px;
-            border-radius: 15px;
+            padding: 16px 20px;
+            border-radius: 12px;
             font-size: 16px;
             font-weight: 600;
             cursor: pointer;
             transition: all 0.3s;
-            min-width: 150px;
+            width: 100%;
             text-align: center;
             pointer-events: auto;
-        }
-
-        .timer-btn:hover {
-            background: rgba(255,255,255,0.35);
-            transform: translateY(-3px);
-            box-shadow: 0 6px 20px rgba(0,0,0,0.3);
+            -webkit-tap-highlight-color: transparent;
+            min-height: 60px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
         }
 
         .timer-btn:active {
-            transform: translateY(-1px);
+            background: rgba(255,255,255,0.35);
+            transform: scale(0.98);
         }
 
         .paused-overlay {
@@ -456,11 +527,37 @@
             display: block;
         }
 
+        .round-header {
+            text-align: center;
+            margin-bottom: 20px;
+            padding: 15px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border-radius: 10px;
+        }
+
+        .round-header h2 {
+            margin: 0;
+            color: white;
+        }
+
         .button-group {
             margin-top: 20px;
             display: flex;
             gap: 10px;
             flex-wrap: wrap;
+        }
+
+        .button-group button {
+            flex: 1;
+            min-width: 150px;
+        }
+
+        .table-wrapper {
+            overflow-x: auto;
+            -webkit-overflow-scrolling: touch;
+            margin: 20px -15px;
+            padding: 0 15px;
         }
 
         .error {
@@ -564,16 +661,13 @@
                 
                 <div class="timer-controls">
                     <button class="timer-btn next-btn" onclick="nextPlayerTurn()">
-                        <span style="font-size: 24px;">➡️</span><br>
-                        Siguiente Turno
+                        ➡️ Siguiente Turno
                     </button>
                     <button class="timer-btn pause-btn" onclick="togglePause()" id="pauseBtn">
-                        <span style="font-size: 24px;">⏸️</span><br>
-                        Pausar
+                        ⏸️ Pausar
                     </button>
                     <button class="timer-btn end-btn" onclick="endTimerSession()">
-                        <span style="font-size: 24px;">🏁</span><br>
-                        Finalizar
+                        🏁 Finalizar
                     </button>
                 </div>
             </div>
@@ -591,17 +685,31 @@
                 <label>¿Cómo se puntúa el juego?</label>
                 <div class="checkbox-label">
                     <input type="radio" name="scoringType" value="rounds" id="roundsRadio" checked>
-                    <label for="roundsRadio">Por rondas</label>
+                    <label for="roundsRadio">Por rondas simples (solo puntos)</label>
                 </div>
                 <div class="checkbox-label">
                     <input type="radio" name="scoringType" value="items" id="itemsRadio">
-                    <label for="itemsRadio">Por ítems puntuables al final</label>
+                    <label for="itemsRadio">Por ítems al final del juego</label>
+                </div>
+                <div class="checkbox-label">
+                    <input type="radio" name="scoringType" value="rounds_with_items" id="roundsWithItemsRadio">
+                    <label for="roundsWithItemsRadio">Rondas con ítems (múltiples categorías por ronda)</label>
                 </div>
             </div>
 
             <div id="roundsConfig" class="form-group">
                 <label for="numRounds">Número de rondas:</label>
                 <input type="number" id="numRounds" value="5" min="1" max="20">
+                
+                <label style="margin-top: 15px;">¿Cuándo anotar las puntuaciones?</label>
+                <div class="checkbox-label">
+                    <input type="radio" name="roundScoring" value="all_at_end" id="allAtEndRadio" checked>
+                    <label for="allAtEndRadio">Todas las rondas al final</label>
+                </div>
+                <div class="checkbox-label">
+                    <input type="radio" name="roundScoring" value="round_by_round" id="roundByRoundRadio">
+                    <label for="roundByRoundRadio">Anotar cada ronda antes de pasar a la siguiente</label>
+                </div>
             </div>
 
             <div id="itemsConfig" class="form-group" style="display: none;">
@@ -619,6 +727,26 @@
                     </div>
                 </div>
                 <button class="add-player-btn" onclick="addItemInput()">+ Añadir Ítem</button>
+            </div>
+
+            <div id="roundsWithItemsConfig" class="form-group" style="display: none;">
+                <label for="numRoundsWithItems">Número de rondas:</label>
+                <input type="number" id="numRoundsWithItems" value="3" min="1" max="10">
+                
+                <label style="margin-top: 15px;">Ítems a puntuar en cada ronda:</label>
+                <div id="roundItemsContainer">
+                    <div class="scoring-item">
+                        <div class="scoring-item-header">
+                            <input type="text" placeholder="Nombre del ítem (ej: Territorios)" class="round-item-name" style="width: 60%;">
+                            <div class="checkbox-label">
+                                <input type="checkbox" class="round-item-negative">
+                                <label>Resta</label>
+                            </div>
+                            <button onclick="removeRoundItem(this)" style="background: #ff4757; padding: 5px 10px;">✕</button>
+                        </div>
+                    </div>
+                </div>
+                <button class="add-player-btn" onclick="addRoundItemInput()">+ Añadir Ítem</button>
             </div>
 
             <div class="button-group">
@@ -653,6 +781,7 @@
             <div id="resultsContainer" class="results"></div>
 
             <div class="button-group">
+                <button onclick="shareResults()">📤 Compartir Resultados</button>
                 <button onclick="resetGame()">Nueva Partida</button>
             </div>
         </div>
@@ -665,17 +794,27 @@
             playerColors: [],
             timePerPlayer: 60,
             scoringType: 'rounds',
+            roundScoringMode: 'all_at_end', // 'all_at_end' o 'round_by_round'
             numRounds: 5,
+            currentRound: 1,
+            roundScores: [], // Para almacenar puntuaciones por ronda
             items: [],
+            roundItems: [], // Ítems que se puntúan en cada ronda
+            roundItemScores: [], // Puntuaciones de ítems por ronda
             orderedPlayers: [],
-            orderedColors: []
+            orderedColors: [],
+            usedTimer: false,
+            gameStartTime: null,
+            gameEndTime: null,
+            playerTotalTimes: [] // Tiempo total usado por cada jugador
         };
 
         let timerData = {
             currentPlayerIndex: 0,
             timeRemaining: 60,
             interval: null,
-            isPaused: false
+            isPaused: false,
+            playerTimeUsed: [] // Tiempo usado en el turno actual
         };
 
         const defaultPlayerColors = [
@@ -795,112 +934,74 @@
             
             document.getElementById('gameDisplayOrder').textContent = gameData.gameName;
             
-            // Crear lista ordenable de jugadores
+            // Crear lista ordenable de jugadores con botones
+            renderOrderList();
+            
+            showScreen('orderPlayersScreen');
+        }
+
+        function renderOrderList() {
             const container = document.getElementById('orderContainer');
             container.innerHTML = '';
             
             gameData.orderedPlayers.forEach((player, index) => {
                 const div = document.createElement('div');
                 div.className = 'order-item';
-                div.draggable = true;
                 div.dataset.index = index;
                 div.style.borderColor = gameData.orderedColors[index];
                 div.innerHTML = `
-                    <span class="drag-handle">☰</span>
                     <div class="order-number" style="background-color: ${gameData.orderedColors[index]};">${index + 1}</div>
                     <div class="order-player-name">${player}</div>
+                    <div class="order-controls">
+                        <button class="order-btn" onclick="movePlayerUp(${index})" ${index === 0 ? 'disabled' : ''}>▲</button>
+                        <button class="order-btn" onclick="movePlayerDown(${index})" ${index === gameData.orderedPlayers.length - 1 ? 'disabled' : ''}>▼</button>
+                    </div>
                 `;
                 container.appendChild(div);
             });
-            
-            setupDragAndDrop();
-            showScreen('orderPlayersScreen');
         }
 
-        function setupDragAndDrop() {
-            const container = document.getElementById('orderContainer');
-            const items = container.querySelectorAll('.order-item');
+        function movePlayerUp(index) {
+            if (index === 0) return;
             
-            items.forEach(item => {
-                item.addEventListener('dragstart', handleDragStart);
-                item.addEventListener('dragover', handleDragOver);
-                item.addEventListener('drop', handleDrop);
-                item.addEventListener('dragend', handleDragEnd);
-            });
+            // Intercambiar jugadores
+            [gameData.orderedPlayers[index], gameData.orderedPlayers[index - 1]] = 
+            [gameData.orderedPlayers[index - 1], gameData.orderedPlayers[index]];
+            
+            // Intercambiar colores
+            [gameData.orderedColors[index], gameData.orderedColors[index - 1]] = 
+            [gameData.orderedColors[index - 1], gameData.orderedColors[index]];
+            
+            renderOrderList();
         }
 
-        let draggedElement = null;
-
-        function handleDragStart(e) {
-            draggedElement = this;
-            this.classList.add('dragging');
-            e.dataTransfer.effectAllowed = 'move';
-        }
-
-        function handleDragOver(e) {
-            e.preventDefault();
-            e.dataTransfer.dropEffect = 'move';
+        function movePlayerDown(index) {
+            if (index === gameData.orderedPlayers.length - 1) return;
             
-            const afterElement = getDragAfterElement(e.clientY);
-            const container = document.getElementById('orderContainer');
+            // Intercambiar jugadores
+            [gameData.orderedPlayers[index], gameData.orderedPlayers[index + 1]] = 
+            [gameData.orderedPlayers[index + 1], gameData.orderedPlayers[index]];
             
-            if (afterElement == null) {
-                container.appendChild(draggedElement);
-            } else {
-                container.insertBefore(draggedElement, afterElement);
-            }
+            // Intercambiar colores
+            [gameData.orderedColors[index], gameData.orderedColors[index + 1]] = 
+            [gameData.orderedColors[index + 1], gameData.orderedColors[index]];
             
-            return false;
-        }
-
-        function handleDrop(e) {
-            e.stopPropagation();
-            return false;
-        }
-
-        function handleDragEnd(e) {
-            this.classList.remove('dragging');
-            
-            // Actualizar números de orden y mantener colores
-            const items = document.querySelectorAll('.order-item');
-            items.forEach((item, index) => {
-                const numberElement = item.querySelector('.order-number');
-                numberElement.textContent = index + 1;
-            });
-        }
-
-        function getDragAfterElement(y) {
-            const draggableElements = [...document.querySelectorAll('.order-item:not(.dragging)')];
-            
-            return draggableElements.reduce((closest, child) => {
-                const box = child.getBoundingClientRect();
-                const offset = y - box.top - box.height / 2;
-                
-                if (offset < 0 && offset > closest.offset) {
-                    return { offset: offset, element: child };
-                } else {
-                    return closest;
-                }
-            }, { offset: Number.NEGATIVE_INFINITY }).element;
+            renderOrderList();
         }
 
         function confirmOrder() {
-            // Guardar el orden final de jugadores y colores
-            const items = document.querySelectorAll('.order-item');
-            gameData.orderedPlayers = [];
-            gameData.orderedColors = [];
-            
-            items.forEach(item => {
-                const playerName = item.querySelector('.order-player-name').textContent;
-                const playerColor = item.querySelector('.order-number').style.backgroundColor;
-                gameData.orderedPlayers.push(playerName);
-                gameData.orderedColors.push(playerColor);
-            });
+            // Los jugadores ya están ordenados en gameData.orderedPlayers y gameData.orderedColors
             
             // Inicializar temporizador
             timerData.currentPlayerIndex = 0;
             timerData.timeRemaining = gameData.timePerPlayer;
             timerData.isPaused = false;
+            
+            // Inicializar tracking de tiempos
+            gameData.usedTimer = true;
+            gameData.gameStartTime = Date.now();
+            gameData.playerTotalTimes = gameData.orderedPlayers.map(() => 0);
+            timerData.playerTimeUsed = gameData.orderedPlayers.map(() => 0);
             
             startFullscreenTimer();
         }
@@ -930,6 +1031,10 @@
             timerData.interval = setInterval(() => {
                 if (!timerData.isPaused) {
                     timerData.timeRemaining--;
+                    
+                    // Trackear tiempo usado por el jugador actual
+                    timerData.playerTimeUsed[timerData.currentPlayerIndex]++;
+                    
                     document.getElementById('timeDisplayLarge').textContent = formatTime(timerData.timeRemaining);
                     
                     if (timerData.timeRemaining <= 0) {
@@ -943,6 +1048,10 @@
         }
 
         function nextPlayerTurn() {
+            // Guardar tiempo usado por el jugador actual
+            gameData.playerTotalTimes[timerData.currentPlayerIndex] += timerData.playerTimeUsed[timerData.currentPlayerIndex];
+            timerData.playerTimeUsed[timerData.currentPlayerIndex] = 0;
+            
             timerData.currentPlayerIndex = (timerData.currentPlayerIndex + 1) % gameData.orderedPlayers.length;
             timerData.timeRemaining = gameData.timePerPlayer;
             timerData.isPaused = false;
@@ -957,14 +1066,20 @@
             const pauseBtn = document.getElementById('pauseBtn');
             
             if (timerData.isPaused) {
-                pauseBtn.innerHTML = '<span style="font-size: 24px;">▶️</span><br>Reanudar';
+                pauseBtn.textContent = '▶️ Reanudar';
             } else {
-                pauseBtn.innerHTML = '<span style="font-size: 24px;">⏸️</span><br>Pausar';
+                pauseBtn.textContent = '⏸️ Pausar';
             }
         }
 
         function endTimerSession() {
             console.log('endTimerSession called');
+            
+            // Guardar tiempo usado por el jugador actual antes de finalizar
+            if (gameData.usedTimer) {
+                gameData.playerTotalTimes[timerData.currentPlayerIndex] += timerData.playerTimeUsed[timerData.currentPlayerIndex];
+                gameData.gameEndTime = Date.now();
+            }
             
             // Detener el temporizador
             if (timerData.interval) {
@@ -1007,12 +1122,41 @@
         document.getElementById('roundsRadio').addEventListener('change', function() {
             document.getElementById('roundsConfig').style.display = 'block';
             document.getElementById('itemsConfig').style.display = 'none';
+            document.getElementById('roundsWithItemsConfig').style.display = 'none';
         });
 
         document.getElementById('itemsRadio').addEventListener('change', function() {
             document.getElementById('roundsConfig').style.display = 'none';
             document.getElementById('itemsConfig').style.display = 'block';
+            document.getElementById('roundsWithItemsConfig').style.display = 'none';
         });
+
+        document.getElementById('roundsWithItemsRadio').addEventListener('change', function() {
+            document.getElementById('roundsConfig').style.display = 'none';
+            document.getElementById('itemsConfig').style.display = 'none';
+            document.getElementById('roundsWithItemsConfig').style.display = 'block';
+        });
+
+        function addRoundItemInput() {
+            const container = document.getElementById('roundItemsContainer');
+            const div = document.createElement('div');
+            div.className = 'scoring-item';
+            div.innerHTML = `
+                <div class="scoring-item-header">
+                    <input type="text" placeholder="Nombre del ítem" class="round-item-name" style="width: 60%;">
+                    <div class="checkbox-label">
+                        <input type="checkbox" class="round-item-negative">
+                        <label>Resta</label>
+                    </div>
+                    <button onclick="removeRoundItem(this)" style="background: #ff4757; padding: 5px 10px;">✕</button>
+                </div>
+            `;
+            container.appendChild(div);
+        }
+
+        function removeRoundItem(button) {
+            button.closest('.scoring-item').remove();
+        }
 
         function addItemInput() {
             const container = document.getElementById('itemsContainer');
@@ -1044,25 +1188,22 @@
             
             if (gameData.scoringType === 'rounds') {
                 gameData.numRounds = parseInt(document.getElementById('numRounds').value);
+                gameData.roundScoringMode = document.querySelector('input[name="roundScoring"]:checked').value;
                 
-                let table = '<table class="score-table"><thead><tr><th>Jugador</th>';
-                for (let i = 1; i <= gameData.numRounds; i++) {
-                    table += `<th>Ronda ${i}</th>`;
+                // Inicializar array de puntuaciones
+                if (gameData.roundScores.length === 0) {
+                    gameData.roundScores = gameData.players.map(() => []);
+                    gameData.currentRound = 1;
                 }
-                table += '<th>Total</th></tr></thead><tbody>';
                 
-                gameData.players.forEach((player, playerIndex) => {
-                    table += `<tr><td><strong>${player}</strong></td>`;
-                    for (let round = 0; round < gameData.numRounds; round++) {
-                        table += `<td><input type="number" value="0" id="score-${playerIndex}-${round}" onchange="updateTotal(${playerIndex})"></td>`;
-                    }
-                    table += `<td><strong id="total-${playerIndex}">0</strong></td></tr>`;
-                });
+                if (gameData.roundScoringMode === 'round_by_round') {
+                    createRoundByRoundTable(container);
+                } else {
+                    createAllRoundsTable(container);
+                }
                 
-                table += '</tbody></table>';
-                container.innerHTML = table;
-                
-            } else {
+            } else if (gameData.scoringType === 'items') {
+                // Ítems puntuables al final
                 const items = Array.from(document.querySelectorAll('.item-name'))
                     .map((input, index) => ({
                         name: input.value.trim(),
@@ -1071,31 +1212,355 @@
                     .filter(item => item.name !== '');
                 
                 if (items.length === 0) {
-                    alert('Por favor, añade al menos un ítem puntuble');
+                    alert('Por favor, añade al menos un ítem puntuable');
                     return;
                 }
                 
                 gameData.items = items;
+                createItemsTable(container);
                 
-                let table = '<table class="score-table"><thead><tr><th>Jugador</th>';
-                items.forEach(item => {
-                    table += `<th>${item.name}${item.negative ? ' (-)' : ''}</th>`;
-                });
-                table += '<th>Total</th></tr></thead><tbody>';
+            } else if (gameData.scoringType === 'rounds_with_items') {
+                // Rondas con ítems
+                gameData.numRounds = parseInt(document.getElementById('numRoundsWithItems').value);
                 
-                gameData.players.forEach((player, playerIndex) => {
-                    table += `<tr><td><strong>${player}</strong></td>`;
-                    items.forEach((item, itemIndex) => {
-                        table += `<td><input type="number" value="0" id="score-${playerIndex}-${itemIndex}" onchange="updateTotalItems(${playerIndex})"></td>`;
-                    });
-                    table += `<td><strong id="total-${playerIndex}">0</strong></td></tr>`;
-                });
+                const roundItems = Array.from(document.querySelectorAll('.round-item-name'))
+                    .map((input, index) => ({
+                        name: input.value.trim(),
+                        negative: document.querySelectorAll('.round-item-negative')[index].checked
+                    }))
+                    .filter(item => item.name !== '');
                 
-                table += '</tbody></table>';
-                container.innerHTML = table;
+                if (roundItems.length === 0) {
+                    alert('Por favor, añade al menos un ítem a puntuar por ronda');
+                    return;
+                }
+                
+                gameData.roundItems = roundItems;
+                
+                // Inicializar estructuras de datos
+                if (gameData.roundItemScores.length === 0) {
+                    gameData.currentRound = 1;
+                    gameData.roundItemScores = gameData.players.map(() => []);
+                }
+                
+                createRoundWithItemsTable(container);
             }
             
             showScreen('scoringScreen');
+        }
+
+        function createItemsTable(container) {
+            let table = '<div class="table-wrapper"><table class="score-table"><thead><tr><th>Ítem</th>';
+            
+            // Jugadores como columnas
+            gameData.players.forEach(player => {
+                table += `<th>${player}</th>`;
+            });
+            table += '</tr></thead><tbody>';
+            
+            // Ítems como filas
+            gameData.items.forEach((item, itemIndex) => {
+                table += `<tr><td><strong>${item.name}${item.negative ? ' (-)' : ''}</strong></td>`;
+                gameData.players.forEach((player, playerIndex) => {
+                    table += `<td><input type="number" value="0" id="score-${playerIndex}-${itemIndex}" onchange="updateTotalItems(${playerIndex})"></td>`;
+                });
+                table += '</tr>';
+            });
+            
+            // Fila de totales
+            table += '<tr style="background: #f0f0f0;"><td><strong>TOTAL</strong></td>';
+            gameData.players.forEach((player, playerIndex) => {
+                table += `<td><strong id="total-${playerIndex}">0</strong></td>`;
+            });
+            table += '</tr>';
+            
+            table += '</tbody></table></div>';
+            container.innerHTML = table;
+        }
+
+        function createAllRoundsTable(container) {
+            let html = '<div class="table-wrapper">';
+            html += '<table class="score-table"><thead><tr><th>Ronda</th>';
+            
+            // Jugadores como columnas
+            gameData.players.forEach(player => {
+                html += `<th>${player}</th>`;
+            });
+            html += '</tr></thead><tbody>';
+            
+            // Rondas como filas
+            for (let round = 0; round < gameData.numRounds; round++) {
+                html += `<tr><td><strong>R${round + 1}</strong></td>`;
+                gameData.players.forEach((player, playerIndex) => {
+                    html += `<td><input type="number" value="0" id="score-${playerIndex}-${round}" onchange="updateTotal(${playerIndex})"></td>`;
+                });
+                html += '</tr>';
+            }
+            
+            // Fila de totales
+            html += '<tr style="background: #f0f0f0;"><td><strong>TOTAL</strong></td>';
+            gameData.players.forEach((player, playerIndex) => {
+                html += `<td><strong id="total-${playerIndex}">0</strong></td>`;
+            });
+            html += '</tr>';
+            
+            html += '</tbody></table></div>';
+            container.innerHTML = html;
+        }
+
+        function createRoundByRoundTable(container) {
+            let html = `
+                <div class="round-header">
+                    <h2>Ronda ${gameData.currentRound} de ${gameData.numRounds}</h2>
+                </div>
+                <div class="table-wrapper">
+                <table class="score-table">
+                    <thead>
+                        <tr>
+                            <th></th>
+            `;
+            
+            // Jugadores como columnas
+            gameData.players.forEach(player => {
+                html += `<th>${player}</th>`;
+            });
+            
+            html += `
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td><strong>Puntos</strong></td>
+            `;
+            
+            // Inputs de puntuación
+            gameData.players.forEach((player, playerIndex) => {
+                html += `<td><input type="number" value="0" id="round-score-${playerIndex}" style="width: 100%;"></td>`;
+            });
+            
+            html += `
+                        </tr>
+                        <tr style="background: #f0f0f0;">
+                            <td><strong>Total</strong></td>
+            `;
+            
+            // Totales acumulados
+            gameData.players.forEach((player, playerIndex) => {
+                const currentTotal = gameData.roundScores[playerIndex].reduce((sum, score) => sum + score, 0);
+                html += `<td><strong>${currentTotal}</strong></td>`;
+            });
+            
+            html += `
+                        </tr>
+                    </tbody>
+                </table>
+                </div>
+            `;
+            
+            container.innerHTML = html;
+            
+            // Cambiar el texto del botón
+            const continueBtn = document.querySelector('#scoringScreen .button-group button:first-child');
+            if (gameData.currentRound < gameData.numRounds) {
+                continueBtn.textContent = 'Siguiente Ronda →';
+                continueBtn.onclick = saveRoundAndContinue;
+            } else {
+                continueBtn.textContent = 'Calcular Resultados';
+                continueBtn.onclick = saveRoundAndFinish;
+            }
+        }
+
+        function saveRoundAndContinue() {
+            // Guardar puntuaciones de la ronda actual
+            gameData.players.forEach((player, playerIndex) => {
+                const score = parseInt(document.getElementById(`round-score-${playerIndex}`).value) || 0;
+                gameData.roundScores[playerIndex].push(score);
+            });
+            
+            gameData.currentRound++;
+            createRoundByRoundTable(document.getElementById('scoringTableContainer'));
+        }
+
+        function saveRoundAndFinish() {
+            // Guardar puntuaciones de la última ronda
+            gameData.players.forEach((player, playerIndex) => {
+                const score = parseInt(document.getElementById(`round-score-${playerIndex}`).value) || 0;
+                gameData.roundScores[playerIndex].push(score);
+            });
+            
+            // Calcular resultados finales
+            calculateRoundByRoundResults();
+        }
+
+        function calculateRoundByRoundResults() {
+            const results = gameData.players.map((player, index) => ({
+                player: player,
+                score: gameData.roundScores[index].reduce((sum, score) => sum + score, 0)
+            }));
+            
+            results.sort((a, b) => b.score - a.score);
+            
+            document.getElementById('gameDisplayResults').textContent = gameData.gameName;
+            
+            const container = document.getElementById('resultsContainer');
+            container.innerHTML = '';
+            
+            results.forEach((result, index) => {
+                const div = document.createElement('div');
+                div.className = index === 0 ? 'result-item winner' : 'result-item';
+                div.innerHTML = `
+                    <span>${index + 1}. ${result.player}</span>
+                    <span>${result.score} puntos ${index === 0 ? '<span class="winner-badge">🏆 GANADOR</span>' : ''}</span>
+                `;
+                container.appendChild(div);
+            });
+            
+            showScreen('resultsScreen');
+        }
+
+        function createRoundWithItemsTable(container) {
+            let html = `
+                <div class="round-header">
+                    <h2>Ronda ${gameData.currentRound} de ${gameData.numRounds}</h2>
+                </div>
+                <div class="table-wrapper">
+                <table class="score-table">
+                    <thead>
+                        <tr>
+                            <th>Ítem</th>
+            `;
+            
+            gameData.players.forEach(player => {
+                html += `<th>${player}</th>`;
+            });
+            
+            html += `</tr></thead><tbody>`;
+            
+            gameData.roundItems.forEach((item, itemIndex) => {
+                html += `<tr><td><strong>${item.name}${item.negative ? ' (-)' : ''}</strong></td>`;
+                gameData.players.forEach((player, playerIndex) => {
+                    html += `<td><input type="number" value="0" id="round-item-${playerIndex}-${itemIndex}" style="width: 100%;"></td>`;
+                });
+                html += '</tr>';
+            });
+            
+            html += '<tr style="background: #e3f2fd;"><td><strong>Total Ronda</strong></td>';
+            gameData.players.forEach((player, playerIndex) => {
+                html += `<td><strong id="round-total-${playerIndex}">0</strong></td>`;
+            });
+            html += '</tr>';
+            
+            html += '<tr style="background: #f0f0f0;"><td><strong>Total Acumulado</strong></td>';
+            gameData.players.forEach((player, playerIndex) => {
+                const accumulated = calculateAccumulatedTotal(playerIndex);
+                html += `<td><strong>${accumulated}</strong></td>`;
+            });
+            html += '</tr></tbody></table></div>';
+            
+            container.innerHTML = html;
+            
+            gameData.roundItems.forEach((item, itemIndex) => {
+                gameData.players.forEach((player, playerIndex) => {
+                    const input = document.getElementById(`round-item-${playerIndex}-${itemIndex}`);
+                    if (input) {
+                        input.addEventListener('input', () => updateRoundTotal(playerIndex));
+                    }
+                });
+            });
+            
+            const continueBtn = document.querySelector('#scoringScreen .button-group button:first-child');
+            if (gameData.currentRound < gameData.numRounds) {
+                continueBtn.textContent = 'Siguiente Ronda →';
+                continueBtn.onclick = saveRoundWithItemsAndContinue;
+            } else {
+                continueBtn.textContent = 'Calcular Resultados';
+                continueBtn.onclick = saveRoundWithItemsAndFinish;
+            }
+        }
+
+        function updateRoundTotal(playerIndex) {
+            let total = 0;
+            gameData.roundItems.forEach((item, itemIndex) => {
+                const value = parseInt(document.getElementById(`round-item-${playerIndex}-${itemIndex}`).value) || 0;
+                total += item.negative ? -value : value;
+            });
+            const totalElement = document.getElementById(`round-total-${playerIndex}`);
+            if (totalElement) {
+                totalElement.textContent = total;
+            }
+        }
+
+        function calculateAccumulatedTotal(playerIndex) {
+            let total = 0;
+            gameData.roundItemScores[playerIndex].forEach(roundScores => {
+                roundScores.forEach((score, itemIndex) => {
+                    const item = gameData.roundItems[itemIndex];
+                    total += item.negative ? -score : score;
+                });
+            });
+            return total;
+        }
+
+        function saveRoundWithItemsAndContinue() {
+            gameData.players.forEach((player, playerIndex) => {
+                const roundScores = [];
+                gameData.roundItems.forEach((item, itemIndex) => {
+                    const score = parseInt(document.getElementById(`round-item-${playerIndex}-${itemIndex}`).value) || 0;
+                    roundScores.push(score);
+                });
+                gameData.roundItemScores[playerIndex].push(roundScores);
+            });
+            
+            gameData.currentRound++;
+            createRoundWithItemsTable(document.getElementById('scoringTableContainer'));
+        }
+
+        function saveRoundWithItemsAndFinish() {
+            gameData.players.forEach((player, playerIndex) => {
+                const roundScores = [];
+                gameData.roundItems.forEach((item, itemIndex) => {
+                    const score = parseInt(document.getElementById(`round-item-${playerIndex}-${itemIndex}`).value) || 0;
+                    roundScores.push(score);
+                });
+                gameData.roundItemScores[playerIndex].push(roundScores);
+            });
+            
+            calculateRoundWithItemsResults();
+        }
+
+        function calculateRoundWithItemsResults() {
+            const results = gameData.players.map((player, index) => {
+                let total = 0;
+                gameData.roundItemScores[index].forEach(roundScores => {
+                    roundScores.forEach((score, itemIndex) => {
+                        const item = gameData.roundItems[itemIndex];
+                        total += item.negative ? -score : score;
+                    });
+                });
+                return {
+                    player: player,
+                    score: total
+                };
+            });
+            
+            results.sort((a, b) => b.score - a.score);
+            
+            document.getElementById('gameDisplayResults').textContent = gameData.gameName;
+            
+            const container = document.getElementById('resultsContainer');
+            container.innerHTML = '';
+            
+            results.forEach((result, index) => {
+                const div = document.createElement('div');
+                div.className = index === 0 ? 'result-item winner' : 'result-item';
+                div.innerHTML = `
+                    <span>${index + 1}. ${result.player}</span>
+                    <span>${result.score} puntos ${index === 0 ? '<span class="winner-badge">🏆 GANADOR</span>' : ''}</span>
+                `;
+                container.appendChild(div);
+            });
+            
+            showScreen('resultsScreen');
         }
 
         function updateTotal(playerIndex) {
@@ -1142,6 +1607,125 @@
             showScreen('resultsScreen');
         }
 
+        function shareResults() {
+            // Obtener resultados ordenados
+            let results;
+            
+            if (gameData.scoringType === 'rounds' && gameData.roundScoringMode === 'round_by_round') {
+                results = gameData.players.map((player, index) => ({
+                    player: player,
+                    score: gameData.roundScores[index].reduce((sum, score) => sum + score, 0)
+                }));
+            } else if (gameData.scoringType === 'rounds_with_items') {
+                results = gameData.players.map((player, index) => {
+                    let total = 0;
+                    gameData.roundItemScores[index].forEach(roundScores => {
+                        roundScores.forEach((score, itemIndex) => {
+                            const item = gameData.roundItems[itemIndex];
+                            total += item.negative ? -score : score;
+                        });
+                    });
+                    return { player: player, score: total };
+                });
+            } else {
+                // Para todos los demás casos, leer del DOM
+                results = gameData.players.map((player, index) => ({
+                    player: player,
+                    score: parseInt(document.getElementById(`total-${index}`).textContent)
+                }));
+            }
+            
+            results.sort((a, b) => b.score - a.score);
+            
+            // Generar texto para compartir
+            let shareText = `🎲 ${gameData.gameName}\n`;
+            shareText += `━━━━━━━━━━━━━━━━━━━━\n\n`;
+            
+            // Añadir tiempo total si se usó temporizador
+            if (gameData.usedTimer && gameData.gameEndTime) {
+                const totalTime = Math.floor((gameData.gameEndTime - gameData.gameStartTime) / 1000);
+                const minutes = Math.floor(totalTime / 60);
+                const seconds = totalTime % 60;
+                shareText += `⏱️ Tiempo total: ${minutes}m ${seconds}s\n\n`;
+            }
+            
+            // Encontrar jugador más rápido y más lento
+            let fastestPlayer = -1;
+            let slowestPlayer = -1;
+            
+            if (gameData.usedTimer && gameData.playerTotalTimes.length > 0) {
+                const maxTime = Math.max(...gameData.playerTotalTimes);
+                const minTime = Math.min(...gameData.playerTotalTimes.filter(t => t > 0));
+                
+                if (maxTime > 0) {
+                    slowestPlayer = gameData.playerTotalTimes.indexOf(maxTime);
+                }
+                if (minTime > 0 && minTime < maxTime) {
+                    fastestPlayer = gameData.playerTotalTimes.indexOf(minTime);
+                }
+            }
+            
+            // Añadir resultados
+            shareText += `📊 RESULTADOS:\n\n`;
+            results.forEach((result, index) => {
+                const originalIndex = gameData.players.indexOf(result.player);
+                let playerLine = `${index + 1}. ${result.player}: ${result.score} pts`;
+                
+                // Añadir emojis de velocidad
+                if (gameData.usedTimer) {
+                    if (originalIndex === fastestPlayer) {
+                        playerLine += ' 🐇';
+                    }
+                    if (originalIndex === slowestPlayer) {
+                        playerLine += ' 🐢';
+                    }
+                }
+                
+                // Añadir corona al ganador
+                if (index === 0) {
+                    playerLine += ' 👑';
+                }
+                
+                shareText += playerLine + '\n';
+            });
+            
+            shareText += `\n━━━━━━━━━━━━━━━━━━━━\n`;
+            shareText += `Creado con Board Game Tracker 🎯`;
+            
+            // Copiar al portapapeles
+            if (navigator.clipboard && navigator.clipboard.writeText) {
+                navigator.clipboard.writeText(shareText).then(() => {
+                    alert('✅ Resultados copiados al portapapeles!\n\nAhora puedes pegarlos en WhatsApp, Telegram, etc.');
+                }).catch(err => {
+                    console.error('Error al copiar:', err);
+                    fallbackCopyText(shareText);
+                });
+            } else {
+                fallbackCopyText(shareText);
+            }
+        }
+
+        function fallbackCopyText(text) {
+            const textArea = document.createElement('textarea');
+            textArea.value = text;
+            textArea.style.position = 'fixed';
+            textArea.style.left = '-999999px';
+            textArea.style.top = '-999999px';
+            document.body.appendChild(textArea);
+            textArea.focus();
+            textArea.select();
+            
+            try {
+                document.execCommand('copy');
+                alert('✅ Resultados copiados al portapapeles!\n\nAhora puedes pegarlos en WhatsApp, Telegram, etc.');
+            } catch (err) {
+                console.error('Error al copiar:', err);
+                alert('Copia este texto:\n\n' + text);
+            }
+            
+            document.body.removeChild(textArea);
+        }
+
         function resetGame() {
             // Detener temporizador si está activo
             if (timerData.interval) {
@@ -1155,17 +1739,27 @@
                 playerColors: [],
                 timePerPlayer: 60,
                 scoringType: 'rounds',
+                roundScoringMode: 'all_at_end',
                 numRounds: 5,
+                currentRound: 1,
+                roundScores: [],
                 items: [],
+                roundItems: [],
+                roundItemScores: [],
                 orderedPlayers: [],
-                orderedColors: []
+                orderedColors: [],
+                usedTimer: false,
+                gameStartTime: null,
+                gameEndTime: null,
+                playerTotalTimes: []
             };
             
             timerData = {
                 currentPlayerIndex: 0,
                 timeRemaining: 60,
                 interval: null,
-                isPaused: false
+                isPaused: false,
+                playerTimeUsed: []
             };
             
             // Reiniciar formularios
