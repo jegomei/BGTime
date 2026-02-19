@@ -12,7 +12,6 @@
         }
 
         :root {
-            /* Tema claro */
             --bg-gradient-start: #324bbd;
             --bg-gradient-end: #7745a9;
             --container-bg: #ffffff;
@@ -38,7 +37,6 @@
         }
 
         body.dark-theme {
-            /* Tema oscuro */
             --bg-gradient-start: #1a1a2e;
             --bg-gradient-end: #16213e;
             --container-bg: #0f1419;
@@ -63,7 +61,7 @@
             --info-box-border: #4299e1;
         }
 
-       .top-bar {
+        .top-bar {
             display: flex;
             justify-content: center;
             align-items: center;
@@ -96,7 +94,7 @@
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
             background: linear-gradient(135deg, var(--bg-gradient-start) 0%, var(--bg-gradient-end) 100%);
             min-height: 100vh;
-            padding: 4px 25px 10px 25px;
+            padding: 4px 10px 10px 10px;
             -webkit-text-size-adjust: 100%;
             transition: background 0.3s ease;
         }
@@ -137,15 +135,6 @@
             flex-direction: column;
             justify-content: center;
             align-items: center;
-            min-height: 80vh;
-            text-align: center;
-        }
-
-        .welcome-screen {
-            display: flex;
-            flex-direction: column;
-            justify-content: center;
-            align-items: center;
             flex: 1;
             text-align: center;
             padding: 20px;
@@ -163,7 +152,6 @@
             display: block;
         }
 
-        /* Si no hay logo, mostrar un placeholder */
         .app-logo[src="logo.png"] {
             display: none;
         }
@@ -476,7 +464,6 @@
             color: var(--text-primary);
         }
 
-        /* Primera columna fija en móvil */
         .score-table td:first-child,
         .score-table th:first-child {
             position: sticky;
@@ -807,11 +794,13 @@
             color: rgba(255, 255, 255, 0.9);
         }
 
-        /* Ocultar footer en pantallas de temporizador */
-        #timerScreen ~ .footer-credit.footer-outside,
-        #orderPlayersScreen.active ~ .footer-credit.footer-outside,
         body:has(#timerScreen.active) .footer-credit.footer-outside,
         body:has(#orderPlayersScreen.active) .footer-credit.footer-outside {
+            display: none;
+        }
+
+        body:has(#timerScreen.active) .top-bar,
+        body:has(#orderPlayersScreen.active) .top-bar {
             display: none;
         }
 
@@ -832,28 +821,23 @@
             box-shadow: none !important;
             padding: 20px 15px !important;
         }
-
-        .welcome-screen {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            text-align: center;
-            padding-top: 60px;
-        }
     </style>
-    <script src="https://unpkg.com/lucide@latest"></script>
 </head>
 <body>
     <div class="top-bar">
         <button class="top-bar-btn" onclick="resetGame()" aria-label="Inicio">
-            <i data-lucide="house"></i>
+            <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/>
+                <polyline points="9 22 9 12 15 12 15 22"/>
+            </svg>
         </button>
         <button id="themeToggle" class="top-bar-btn" onclick="toggleTheme()" aria-label="Cambiar tema">
-            <i id="themeIcon" data-lucide="moon"></i>
+            <svg id="themeIcon" xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/>
+            </svg>
         </button>
     </div>
 
-    
     <div class="container">
         <!-- Pantalla 1: Configuración inicial -->
         <div id="setupScreen" class="screen active">
@@ -902,7 +886,6 @@
                 <button onclick="startGame('timer')">⏱️ Usar Temporizador</button>
                 <button class="secondary" onclick="startGame('scoring')">📊 Anotar Puntuación</button>
             </div>
-
         </div>
 
         <!-- Pantalla 3: Elección de temporizador -->
@@ -915,8 +898,25 @@
             </div>
 
             <div class="form-group">
+                <label>Modo de temporizador:</label>
+                <div class="checkbox-label">
+                    <input type="radio" name="timerMode" value="per_turn" id="timerPerTurn" checked onchange="updateTimerOptions()">
+                    <label for="timerPerTurn">Tiempo por turno</label>
+                </div>
+                <div class="checkbox-label">
+                    <input type="radio" name="timerMode" value="chess" id="timerChess" onchange="updateTimerOptions()">
+                    <label for="timerChess">Reloj de ajedrez (tiempo total por jugador)</label>
+                </div>
+            </div>
+
+            <div id="optionsPerTurn" class="form-group">
                 <label for="timePerPlayer">Tiempo por turno (segundos):</label>
                 <input type="number" id="timePerPlayer" value="60" min="10" max="600">
+            </div>
+
+            <div id="optionsChess" class="form-group" style="display:none;">
+                <label for="timePerPlayerChess">Tiempo total por jugador (minutos):</label>
+                <input type="number" id="timePerPlayerChess" value="15" min="1" max="120">
             </div>
 
             <div class="button-group">
@@ -1092,20 +1092,21 @@
             players: [],
             playerColors: [],
             timePerPlayer: 60,
+            timerMode: 'per_turn',
             scoringType: 'rounds',
-            roundScoringMode: 'all_at_end', // 'all_at_end' o 'round_by_round'
+            roundScoringMode: 'all_at_end',
             numRounds: 5,
             currentRound: 1,
-            roundScores: [], // Para almacenar puntuaciones por ronda
+            roundScores: [],
             items: [],
-            roundItems: [], // Ítems que se puntúan en cada ronda
-            roundItemScores: [], // Puntuaciones de ítems por ronda
+            roundItems: [],
+            roundItemScores: [],
             orderedPlayers: [],
             orderedColors: [],
             usedTimer: false,
             gameStartTime: null,
             gameEndTime: null,
-            playerTotalTimes: [] // Tiempo total usado por cada jugador
+            playerTotalTimes: []
         };
 
         let timerData = {
@@ -1113,20 +1114,21 @@
             timeRemaining: 60,
             interval: null,
             isPaused: false,
-            playerTimeUsed: [] // Tiempo usado en el turno actual
+            playerTimeUsed: [],
+            playerTimeRemaining: null
         };
 
         const defaultPlayerColors = [
-            '#e74c3c', // Rojo
-            '#3498db', // Azul
-            '#2ecc71', // Verde
-            '#f39c12', // Naranja
-            '#9b59b6', // Púrpura
-            '#1abc9c', // Turquesa
-            '#e67e22', // Naranja oscuro
-            '#34495e', // Azul gris
-            '#d35400', // Calabaza
-            '#16a085'  // Verde azulado
+            '#e74c3c',
+            '#3498db',
+            '#2ecc71',
+            '#f39c12',
+            '#9b59b6',
+            '#1abc9c',
+            '#e67e22',
+            '#34495e',
+            '#d35400',
+            '#16a085'
         ];
 
         function formatTime(seconds) {
@@ -1135,14 +1137,18 @@
             return `${mins}:${secs.toString().padStart(2, '0')}`;
         }
 
-        // Funciones de navegación
+        function updateTimerOptions() {
+            const mode = document.querySelector('input[name="timerMode"]:checked').value;
+            document.getElementById('optionsPerTurn').style.display = mode === 'per_turn' ? 'block' : 'none';
+            document.getElementById('optionsChess').style.display = mode === 'chess' ? 'block' : 'none';
+        }
+
         function showScreen(screenId) {
             document.querySelectorAll('.screen').forEach(screen => {
                 screen.classList.remove('active');
             });
             document.getElementById(screenId).classList.add('active');
             
-            // Ocultar footer en pantallas de temporizador
             const footer = document.querySelector('.footer-credit.footer-outside');
             if (footer) {
                 if (screenId === 'timerScreen' || screenId === 'orderPlayersScreen') {
@@ -1154,7 +1160,6 @@
         }
 
         // Pantalla 1: Setup
-        // Avanzar al presionar Enter
         document.getElementById('gameName').addEventListener('keypress', function(e) {
             if (e.key === 'Enter' && e.target.value.trim().length > 0) {
                 goToPlayersScreen();
@@ -1175,7 +1180,6 @@
             
             showScreen('playersScreen');
             
-            // Enfocar el primer input de jugador
             setTimeout(() => {
                 const firstInput = document.querySelector('.player-name');
                 if (firstInput) firstInput.focus();
@@ -1206,7 +1210,7 @@
 
         function updateRemoveButtons() {
             const rows = document.querySelectorAll('.player-input-row');
-            rows.forEach((row, index) => {
+            rows.forEach((row) => {
                 const btn = row.querySelector('.remove-player-btn');
                 if (rows.length > 2) {
                     btn.style.display = 'block';
@@ -1217,7 +1221,6 @@
         }
 
         function startGame(destination) {
-            // El nombre del juego ya está guardado en gameData.gameName desde goToPlayersScreen
             const playerRows = document.querySelectorAll('.player-input-row');
             
             const players = [];
@@ -1232,7 +1235,6 @@
                 }
             });
 
-            // Validación solo de jugadores
             if (players.length < 2) {
                 document.getElementById('playersError').textContent = 'Necesitas al menos 2 jugadores';
                 return;
@@ -1240,35 +1242,36 @@
                 document.getElementById('playersError').textContent = '';
             }
 
-            // Guardar datos de jugadores
             gameData.players = players;
             gameData.playerColors = colors;
 
             if (destination === 'scoring') {
-                // Ir directamente a la pantalla de configuración de puntuación
-                gameData.usedTimer = false; 
+                gameData.usedTimer = false;
                 document.getElementById('btnVolverTimer').style.display = 'none';
                 document.getElementById('gameDisplayScoring').textContent = gameData.gameName;
                 showScreen('scoringSetupScreen');
             } else {
-                // Ir al flujo normal con temporizador
                 document.getElementById('gameDisplay').textContent = gameData.gameName;
                 document.getElementById('playersDisplay').textContent = players.join(', ');
                 showScreen('timerChoiceScreen');
             }
         }
 
-        // Pantalla 2: Timer Choice
         function startTimer() {
-            gameData.timePerPlayer = parseInt(document.getElementById('timePerPlayer').value);
+            const mode = document.querySelector('input[name="timerMode"]:checked').value;
+            gameData.timerMode = mode;
+
+            if (mode === 'per_turn') {
+                gameData.timePerPlayer = parseInt(document.getElementById('timePerPlayer').value);
+            } else {
+                gameData.timePerPlayer = parseInt(document.getElementById('timePerPlayerChess').value) * 60;
+            }
+
             gameData.orderedPlayers = [...gameData.players];
             gameData.orderedColors = [...gameData.playerColors];
-            
+
             document.getElementById('gameDisplayOrder').textContent = gameData.gameName;
-            
-            // Crear lista ordenable de jugadores con botones
             renderOrderList();
-            
             showScreen('orderPlayersScreen');
         }
 
@@ -1295,52 +1298,44 @@
 
         function movePlayerUp(index) {
             if (index === 0) return;
-            
-            // Intercambiar jugadores
             [gameData.orderedPlayers[index], gameData.orderedPlayers[index - 1]] = 
             [gameData.orderedPlayers[index - 1], gameData.orderedPlayers[index]];
-            
-            // Intercambiar colores
             [gameData.orderedColors[index], gameData.orderedColors[index - 1]] = 
             [gameData.orderedColors[index - 1], gameData.orderedColors[index]];
-            
             renderOrderList();
         }
 
         function movePlayerDown(index) {
             if (index === gameData.orderedPlayers.length - 1) return;
-            
-            // Intercambiar jugadores
             [gameData.orderedPlayers[index], gameData.orderedPlayers[index + 1]] = 
             [gameData.orderedPlayers[index + 1], gameData.orderedPlayers[index]];
-            
-            // Intercambiar colores
             [gameData.orderedColors[index], gameData.orderedColors[index + 1]] = 
             [gameData.orderedColors[index + 1], gameData.orderedColors[index]];
-            
             renderOrderList();
         }
 
         function confirmOrder() {
-            // Los jugadores ya están ordenados en gameData.orderedPlayers y gameData.orderedColors
-            
-            // Inicializar temporizador
             timerData.currentPlayerIndex = 0;
-            timerData.timeRemaining = gameData.timePerPlayer;
             timerData.isPaused = false;
-            
-            // Inicializar tracking de tiempos
+
+            if (gameData.timerMode === 'chess') {
+                timerData.playerTimeRemaining = gameData.orderedPlayers.map(() => gameData.timePerPlayer);
+                timerData.timeRemaining = timerData.playerTimeRemaining[0];
+            } else {
+                timerData.timeRemaining = gameData.timePerPlayer;
+                timerData.playerTimeRemaining = null;
+            }
+
             gameData.usedTimer = true;
             gameData.gameStartTime = Date.now();
             gameData.playerTotalTimes = gameData.orderedPlayers.map(() => 0);
             timerData.playerTimeUsed = gameData.orderedPlayers.map(() => 0);
-            
+
             startFullscreenTimer();
         }
 
         function startFullscreenTimer() {
             showScreen('timerScreen');
-            
             document.getElementById('gameNameTimer').textContent = gameData.gameName;
             updateTimerDisplay();
             startCountdown();
@@ -1359,20 +1354,23 @@
             if (timerData.interval) {
                 clearInterval(timerData.interval);
             }
-            
+
             timerData.interval = setInterval(() => {
                 if (!timerData.isPaused) {
                     timerData.timeRemaining--;
-                    
-                    // Trackear tiempo usado por el jugador actual
                     timerData.playerTimeUsed[timerData.currentPlayerIndex]++;
-                    
+
+                    if (gameData.timerMode === 'chess') {
+                        timerData.playerTimeRemaining[timerData.currentPlayerIndex] = timerData.timeRemaining;
+                    }
+
                     document.getElementById('timeDisplayLarge').textContent = formatTime(timerData.timeRemaining);
-                    
+
                     if (timerData.timeRemaining <= 0) {
-                        // Tiempo agotado
                         clearInterval(timerData.interval);
-                        alert(`¡Tiempo agotado para ${gameData.orderedPlayers[timerData.currentPlayerIndex]}!`);
+                        timerData.interval = null;
+                        const playerName = gameData.orderedPlayers[timerData.currentPlayerIndex];
+                        alert(`¡Tiempo agotado para ${playerName}!`);
                         nextPlayerTurn();
                     }
                 }
@@ -1380,17 +1378,22 @@
         }
 
         function nextPlayerTurn() {
-            // Guardar tiempo usado por el jugador actual
             gameData.playerTotalTimes[timerData.currentPlayerIndex] += timerData.playerTimeUsed[timerData.currentPlayerIndex];
             timerData.playerTimeUsed[timerData.currentPlayerIndex] = 0;
-            
+
             timerData.currentPlayerIndex = (timerData.currentPlayerIndex + 1) % gameData.orderedPlayers.length;
-            timerData.timeRemaining = gameData.timePerPlayer;
+
+            if (gameData.timerMode === 'chess') {
+                timerData.timeRemaining = timerData.playerTimeRemaining[timerData.currentPlayerIndex];
+            } else {
+                timerData.timeRemaining = gameData.timePerPlayer;
+            }
+
             timerData.isPaused = false;
-            
             document.getElementById('pauseBtn').innerHTML = '<span style="font-size: 24px;">⏸️</span><br>Pausar';
-            
+
             updateTimerDisplay();
+            startCountdown();
         }
 
         function togglePause() {
@@ -1405,31 +1408,23 @@
         }
 
         function endTimerSession() {
-            console.log('endTimerSession called');
-            
-            // Guardar tiempo usado por el jugador actual antes de finalizar
             if (gameData.usedTimer) {
                 gameData.playerTotalTimes[timerData.currentPlayerIndex] += timerData.playerTimeUsed[timerData.currentPlayerIndex];
                 gameData.gameEndTime = Date.now();
             }
             
-            // Detener el temporizador
             if (timerData.interval) {
                 clearInterval(timerData.interval);
                 timerData.interval = null;
             }
             
-            // Ir a la configuración de puntuación
             document.getElementById('btnVolverTimer').style.display = 'inline-block';
             document.getElementById('gameDisplayScoring').textContent = gameData.gameName;
             showScreen('scoringSetupScreen');
         }
 
         function returnToTimer() {
-            // Volver al temporizador y reanudarlo
             showScreen('timerScreen');
-            
-            // Reiniciar el temporizador si no está corriendo
             if (!timerData.interval) {
                 startCountdown();
             }
@@ -1442,12 +1437,10 @@
         }
 
         function goToScoring() {
-            // Detener el temporizador si está activo
             if (timerData.interval) {
                 clearInterval(timerData.interval);
                 timerData.interval = null;
             }
-            
             showScreen('scoringSetupScreen');
             document.getElementById('gameDisplayScoring').textContent = gameData.gameName;
         }
@@ -1524,7 +1517,6 @@
                 gameData.numRounds = parseInt(document.getElementById('numRounds').value);
                 gameData.roundScoringMode = document.querySelector('input[name="roundScoring"]:checked').value;
                 
-                // Inicializar array de puntuaciones
                 if (gameData.roundScores.length === 0) {
                     gameData.roundScores = gameData.players.map(() => []);
                     gameData.currentRound = 1;
@@ -1537,7 +1529,6 @@
                 }
                 
             } else if (gameData.scoringType === 'items') {
-                // Ítems puntuables al final
                 const items = Array.from(document.querySelectorAll('.item-name'))
                     .map((input, index) => ({
                         name: input.value.trim(),
@@ -1554,7 +1545,6 @@
                 createItemsTable(container);
                 
             } else if (gameData.scoringType === 'rounds_with_items') {
-                // Rondas con ítems
                 gameData.numRounds = parseInt(document.getElementById('numRoundsWithItems').value);
                 
                 const roundItems = Array.from(document.querySelectorAll('.round-item-name'))
@@ -1571,7 +1561,6 @@
                 
                 gameData.roundItems = roundItems;
                 
-                // Inicializar estructuras de datos
                 if (gameData.roundItemScores.length === 0) {
                     gameData.currentRound = 1;
                     gameData.roundItemScores = gameData.players.map(() => []);
@@ -1586,13 +1575,11 @@
         function createItemsTable(container) {
             let table = '<div class="table-wrapper"><table class="score-table"><thead><tr><th>Ítem</th>';
             
-            // Jugadores como columnas
             gameData.players.forEach(player => {
                 table += `<th>${player}</th>`;
             });
             table += '</tr></thead><tbody>';
             
-            // Ítems como filas
             gameData.items.forEach((item, itemIndex) => {
                 table += `<tr><td><strong>${item.name}${item.negative ? ' (-)' : ''}</strong></td>`;
                 gameData.players.forEach((player, playerIndex) => {
@@ -1601,7 +1588,6 @@
                 table += '</tr>';
             });
             
-            // Fila de totales
             table += '<tr style="background: #f0f0f0;"><td><strong>TOTAL</strong></td>';
             gameData.players.forEach((player, playerIndex) => {
                 table += `<td><strong id="total-${playerIndex}">0</strong></td>`;
@@ -1616,13 +1602,11 @@
             let html = '<div class="table-wrapper">';
             html += '<table class="score-table"><thead><tr><th>Ronda</th>';
             
-            // Jugadores como columnas
             gameData.players.forEach(player => {
                 html += `<th>${player}</th>`;
             });
             html += '</tr></thead><tbody>';
             
-            // Rondas como filas
             for (let round = 0; round < gameData.numRounds; round++) {
                 html += `<tr><td><strong>R${round + 1}</strong></td>`;
                 gameData.players.forEach((player, playerIndex) => {
@@ -1631,7 +1615,6 @@
                 html += '</tr>';
             }
             
-            // Fila de totales
             html += '<tr style="background: #f0f0f0;"><td><strong>TOTAL</strong></td>';
             gameData.players.forEach((player, playerIndex) => {
                 html += `<td><strong id="total-${playerIndex}">0</strong></td>`;
@@ -1654,7 +1637,6 @@
                             <th></th>
             `;
             
-            // Jugadores como columnas
             gameData.players.forEach(player => {
                 html += `<th>${player}</th>`;
             });
@@ -1667,7 +1649,6 @@
                             <td><strong>Puntos</strong></td>
             `;
             
-            // Inputs de puntuación
             gameData.players.forEach((player, playerIndex) => {
                 html += `<td><input type="number" value="0" id="round-score-${playerIndex}" style="width: 100%;"></td>`;
             });
@@ -1678,7 +1659,6 @@
                             <td><strong>Total</strong></td>
             `;
             
-            // Totales acumulados
             gameData.players.forEach((player, playerIndex) => {
                 const currentTotal = gameData.roundScores[playerIndex].reduce((sum, score) => sum + score, 0);
                 html += `<td><strong>${currentTotal}</strong></td>`;
@@ -1693,7 +1673,6 @@
             
             container.innerHTML = html;
             
-            // Cambiar el texto del botón
             const continueBtn = document.querySelector('#scoringScreen .button-group button:first-child');
             if (gameData.currentRound < gameData.numRounds) {
                 continueBtn.textContent = 'Siguiente Ronda →';
@@ -1705,7 +1684,6 @@
         }
 
         function saveRoundAndContinue() {
-            // Guardar puntuaciones de la ronda actual
             gameData.players.forEach((player, playerIndex) => {
                 const score = parseInt(document.getElementById(`round-score-${playerIndex}`).value) || 0;
                 gameData.roundScores[playerIndex].push(score);
@@ -1716,13 +1694,11 @@
         }
 
         function saveRoundAndFinish() {
-            // Guardar puntuaciones de la última ronda
             gameData.players.forEach((player, playerIndex) => {
                 const score = parseInt(document.getElementById(`round-score-${playerIndex}`).value) || 0;
                 gameData.roundScores[playerIndex].push(score);
             });
             
-            // Calcular resultados finales
             calculateRoundByRoundResults();
         }
 
@@ -1871,10 +1847,7 @@
                         total += item.negative ? -score : score;
                     });
                 });
-                return {
-                    player: player,
-                    score: total
-                };
+                return { player: player, score: total };
             });
             
             results.sort((a, b) => b.score - a.score);
@@ -1942,7 +1915,6 @@
         }
 
         function shareResults() {
-            // Obtener resultados ordenados
             let results;
             
             if (gameData.scoringType === 'rounds' && gameData.roundScoringMode === 'round_by_round') {
@@ -1962,7 +1934,6 @@
                     return { player: player, score: total };
                 });
             } else {
-                // Para todos los demás casos, leer del DOM
                 results = gameData.players.map((player, index) => ({
                     player: player,
                     score: parseInt(document.getElementById(`total-${index}`).textContent)
@@ -1971,11 +1942,9 @@
             
             results.sort((a, b) => b.score - a.score);
             
-            // Generar texto para compartir
             let shareText = `🎲 ${gameData.gameName}\n`;
             shareText += `━━━━━━━━━━━━━━━━━━━━\n\n`;
             
-            // Añadir tiempo total si se usó temporizador
             if (gameData.usedTimer && gameData.gameEndTime) {
                 const totalTime = Math.floor((gameData.gameEndTime - gameData.gameStartTime) / 1000);
                 const minutes = Math.floor(totalTime / 60);
@@ -1983,7 +1952,6 @@
                 shareText += `⏱️ Tiempo total: ${minutes}m ${seconds}s\n\n`;
             }
             
-            // Encontrar jugador más rápido y más lento
             let fastestPlayer = -1;
             let slowestPlayer = -1;
             
@@ -1999,26 +1967,17 @@
                 }
             }
             
-            // Añadir resultados
             shareText += `📊 RESULTADOS:\n\n`;
             results.forEach((result, index) => {
                 const originalIndex = gameData.players.indexOf(result.player);
                 let playerLine = `${index + 1}. ${result.player}: ${result.score} pts`;
                 
-                // Añadir emojis de velocidad
                 if (gameData.usedTimer) {
-                    if (originalIndex === fastestPlayer) {
-                        playerLine += ' 🐇';
-                    }
-                    if (originalIndex === slowestPlayer) {
-                        playerLine += ' 🐢';
-                    }
+                    if (originalIndex === fastestPlayer) playerLine += ' 🐇';
+                    if (originalIndex === slowestPlayer) playerLine += ' 🐢';
                 }
                 
-                // Añadir corona al ganador
-                if (index === 0) {
-                    playerLine += ' 👑';
-                }
+                if (index === 0) playerLine += ' 👑';
                 
                 shareText += playerLine + '\n';
             });
@@ -2026,12 +1985,10 @@
             shareText += `\n━━━━━━━━━━━━━━━━━━━━\n`;
             shareText += `Creado con Board Game Tracker 🎯`;
             
-            // Copiar al portapapeles
             if (navigator.clipboard && navigator.clipboard.writeText) {
                 navigator.clipboard.writeText(shareText).then(() => {
                     alert('✅ Resultados copiados al portapapeles!\n\nAhora puedes pegarlos en WhatsApp, Telegram, etc.');
                 }).catch(err => {
-                    console.error('Error al copiar:', err);
                     fallbackCopyText(shareText);
                 });
             } else {
@@ -2053,7 +2010,6 @@
                 document.execCommand('copy');
                 alert('✅ Resultados copiados al portapapeles!\n\nAhora puedes pegarlos en WhatsApp, Telegram, etc.');
             } catch (err) {
-                console.error('Error al copiar:', err);
                 alert('Copia este texto:\n\n' + text);
             }
             
@@ -2061,17 +2017,16 @@
         }
 
         function resetGame() {
-            // Detener temporizador si está activo
             if (timerData.interval) {
                 clearInterval(timerData.interval);
             }
             
-            // Limpiar todos los datos
             gameData = {
                 gameName: '',
                 players: [],
                 playerColors: [],
                 timePerPlayer: 60,
+                timerMode: 'per_turn',
                 scoringType: 'rounds',
                 roundScoringMode: 'all_at_end',
                 numRounds: 5,
@@ -2093,10 +2048,10 @@
                 timeRemaining: 60,
                 interval: null,
                 isPaused: false,
-                playerTimeUsed: []
+                playerTimeUsed: [],
+                playerTimeRemaining: null
             };
             
-            // Reiniciar formularios
             document.getElementById('gameName').value = '';
             document.getElementById('gameNameError').textContent = '';
             document.getElementById('playersContainer').innerHTML = `
@@ -2127,7 +2082,9 @@
             showScreen('setupScreen');
         }
 
-        // Función para cambiar tema
+        const SVG_MOON = '<path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/>';
+        const SVG_SUN  = '<circle cx="12" cy="12" r="4"/><line x1="12" y1="2" x2="12" y2="6"/><line x1="12" y1="18" x2="12" y2="22"/><line x1="4.93" y1="4.93" x2="7.76" y2="7.76"/><line x1="16.24" y1="16.24" x2="19.07" y2="19.07"/><line x1="2" y1="12" x2="6" y2="12"/><line x1="18" y1="12" x2="22" y2="12"/><line x1="4.93" y1="19.07" x2="7.76" y2="16.24"/><line x1="16.24" y1="7.76" x2="19.07" y2="4.93"/>';
+
         function toggleTheme() {
             const body = document.body;
             const themeIcon = document.getElementById('themeIcon');
@@ -2135,13 +2092,12 @@
             body.classList.toggle('dark-theme');
 
             if (body.classList.contains('dark-theme')) {
-                themeIcon.setAttribute('data-lucide', 'sun');
+                themeIcon.innerHTML = SVG_SUN;
                 localStorage.setItem('theme', 'dark');
             } else {
-                themeIcon.setAttribute('data-lucide', 'moon');
+                themeIcon.innerHTML = SVG_MOON;
                 localStorage.setItem('theme', 'light');
             }
-            lucide.createIcons();
         }
 
         document.addEventListener('DOMContentLoaded', function() {
@@ -2150,9 +2106,8 @@
 
             if (savedTheme === 'dark') {
                 document.body.classList.add('dark-theme');
-                themeIcon.setAttribute('data-lucide', 'sun');
+                themeIcon.innerHTML = SVG_SUN;
             }
-            lucide.createIcons();
         });
     </script>
 </body>
