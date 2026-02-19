@@ -688,41 +688,69 @@
         .timer-controls {
             display: flex;
             flex-direction: column;
-            gap: 12px;
+            align-items: center;
+            gap: 16px;
             position: absolute;
-            bottom: 20px;
+            bottom: 36px;
             left: 50%;
             transform: translateX(-50%);
             z-index: 1000;
             width: 90%;
-            max-width: 400px;
+            max-width: 320px;
         }
 
         .timer-btn {
-            background: rgba(255,255,255,0.25);
+            background: rgba(255,255,255,0.2);
             backdrop-filter: blur(10px);
             border: 2px solid rgba(255,255,255,0.4);
             color: white;
-            padding: 16px 20px;
-            border-radius: 12px;
-            font-size: 16px;
-            font-weight: 600;
+            border-radius: 50%;
             cursor: pointer;
-            transition: all 0.3s;
-            width: 100%;
-            text-align: center;
+            transition: all 0.2s;
             pointer-events: auto;
             -webkit-tap-highlight-color: transparent;
-            min-height: 60px;
             display: flex;
             align-items: center;
             justify-content: center;
-            gap: 10px;
+            padding: 0;
+            flex-shrink: 0;
         }
 
         .timer-btn:active {
             background: rgba(255,255,255,0.35);
-            transform: scale(0.98);
+            transform: scale(0.93);
+        }
+
+        .timer-btn.next-btn {
+            width: 110px;
+            height: 110px;
+            position: relative;
+        }
+
+        .next-btn-inner {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            gap: 2px;
+        }
+
+        .next-btn-player-hint {
+            opacity: 0.45;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .timer-btn.pause-btn {
+            width: 80px;
+            height: 80px;
+        }
+
+        .timer-btn.end-btn {
+            width: 58px;
+            height: 58px;
+            opacity: 0.6;
         }
 
         .paused-overlay {
@@ -975,14 +1003,33 @@
                 <div class="time-display-large" id="timeDisplayLarge">1:00</div>
                 
                 <div class="timer-controls">
-                    <button class="timer-btn next-btn" onclick="nextPlayerTurn()">
-                        ➡️ Siguiente Turno
+                    <!-- Siguiente turno -->
+                    <button class="timer-btn next-btn" onclick="nextPlayerTurn()" aria-label="Siguiente turno">
+                        <div class="next-btn-inner">
+                            <div class="next-btn-player-hint">
+                                <!-- persona -->
+                                <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                    <circle cx="12" cy="7" r="4"/>
+                                    <path d="M5.5 20a7 7 0 0 1 13 0"/>
+                                </svg>
+                            </div>
+                            <!-- flecha -->
+                            <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                <polyline points="9 18 15 12 9 6"/>
+                            </svg>
+                        </div>
                     </button>
-                    <button class="timer-btn pause-btn" onclick="togglePause()" id="pauseBtn">
-                        ⏸️ Pausar
+                    <!-- Pausar -->
+                    <button class="timer-btn pause-btn" onclick="togglePause()" id="pauseBtn" aria-label="Pausar">
+                        <svg id="pauseIcon" xmlns="http://www.w3.org/2000/svg" width="34" height="34" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <rect x="6" y="4" width="4" height="16"/><rect x="14" y="4" width="4" height="16"/>
+                        </svg>
                     </button>
-                    <button class="timer-btn end-btn" onclick="endTimerSession()">
-                        🏁 Finalizar
+                    <!-- Finalizar -->
+                    <button class="timer-btn end-btn" onclick="endTimerSession()" aria-label="Finalizar">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                            <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
+                        </svg>
                     </button>
                 </div>
             </div>
@@ -1423,21 +1470,19 @@
             }
 
             timerData.isPaused = false;
-            document.getElementById('pauseBtn').innerHTML = '<span style="font-size: 24px;">⏸️</span><br>Pausar';
+            document.getElementById('pauseIcon').innerHTML = SVG_PAUSE;
 
             updateTimerDisplay();
             startCountdown();
         }
 
+        const SVG_PAUSE = '<rect x="6" y="4" width="4" height="16"/><rect x="14" y="4" width="4" height="16"/>';
+        const SVG_PLAY  = '<polygon points="5 3 19 12 5 21 5 3"/>';
+
         function togglePause() {
             timerData.isPaused = !timerData.isPaused;
-            const pauseBtn = document.getElementById('pauseBtn');
-            
-            if (timerData.isPaused) {
-                pauseBtn.textContent = '▶️ Reanudar';
-            } else {
-                pauseBtn.textContent = '⏸️ Pausar';
-            }
+            const pauseIcon = document.getElementById('pauseIcon');
+            pauseIcon.innerHTML = timerData.isPaused ? SVG_PLAY : SVG_PAUSE;
         }
 
         function endTimerSession() {
@@ -1793,7 +1838,7 @@
                 timerData.timeRemaining = gameData.timePerPlayer;
             }
             timerData.isPaused = false;
-            document.getElementById('pauseBtn').innerHTML = '<span style="font-size: 24px;">⏸️</span><br>Pausar';
+            document.getElementById('pauseIcon').innerHTML = SVG_PAUSE;
             updateTimerDisplay();
             startCountdown();
         }
