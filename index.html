@@ -995,11 +995,6 @@
         <!-- Pantalla 3B: Temporizador pantalla completa -->
         <div id="timerScreen" class="screen">
             <div id="timerFullscreen" class="timer-fullscreen">
-                <div class="timer-info">
-                    <div class="game-name-timer" id="gameNameTimer"></div>
-                    <div class="round-info" id="roundInfo">Turno de:</div>
-                </div>
-                
                 <div class="player-name-large" id="currentPlayerName"></div>
                 
                 <div class="time-display-large" id="timeDisplayLarge">1:00</div>
@@ -1416,18 +1411,36 @@
 
         function startFullscreenTimer() {
             showScreen('timerScreen');
-            document.getElementById('gameNameTimer').textContent = gameData.gameName;
             updateTimerDisplay();
             startCountdown();
         }
 
+        function updateTimerGradient() {
+            const card = document.getElementById('timerFullscreen');
+            const color = gameData.orderedColors[timerData.currentPlayerIndex];
+            const initialTime = gameData.timePerPlayer;
+            const remaining = Math.max(0, timerData.timeRemaining);
+            const pct = Math.round((remaining / initialTime) * 100);
+
+            card.style.background = `linear-gradient(to bottom, ${color} ${pct}%, #111111 ${pct}%)`;
+
+            card.querySelectorAll('.player-name-large, .time-display-large').forEach(el => {
+                el.style.color = 'white';
+                el.style.textShadow = '0 2px 8px rgba(0,0,0,0.4)';
+            });
+
+            card.querySelectorAll('.timer-btn').forEach(btn => {
+                btn.style.color = 'rgba(255,255,255,0.85)';
+                btn.style.borderColor = 'rgba(255,255,255,0.4)';
+                btn.style.background = 'rgba(255,255,255,0.15)';
+            });
+        }
+
         function updateTimerDisplay() {
             const currentPlayer = gameData.orderedPlayers[timerData.currentPlayerIndex];
-            const color = gameData.orderedColors[timerData.currentPlayerIndex];
-            
-            document.getElementById('timerFullscreen').style.backgroundColor = color;
             document.getElementById('currentPlayerName').textContent = currentPlayer;
             document.getElementById('timeDisplayLarge').textContent = formatTime(timerData.timeRemaining);
+            updateTimerGradient();
         }
 
         function startCountdown() {
@@ -1445,6 +1458,7 @@
                     }
 
                     document.getElementById('timeDisplayLarge').textContent = formatTime(timerData.timeRemaining);
+                    updateTimerGradient();
 
                     if (timerData.timeRemaining <= 0) {
                         clearInterval(timerData.interval);
