@@ -629,59 +629,57 @@
         }
 
         .timer-fullscreen {
-            position: fixed;
-            top: 0;
-            left: 0;
-            right: 0;
-            bottom: 0;
             display: flex;
             flex-direction: column;
-            justify-content: center;
             align-items: center;
+            border-radius: 20px;
+            padding: 32px 24px 28px 24px;
             transition: background-color 0.5s ease;
-            padding: 20px;
+            box-shadow: 0 8px 32px rgba(0,0,0,0.25);
+            position: relative;
+            overflow: hidden;
+            min-height: 420px;
+            justify-content: center;
+            gap: 0;
         }
 
         .timer-info {
-            position: absolute;
-            top: 20px;
-            left: 50%;
-            transform: translateX(-50%);
             text-align: center;
-            width: 90%;
+            width: 100%;
+            margin-bottom: 18px;
         }
 
         .game-name-timer {
             font-size: 18px;
             font-weight: 600;
             color: rgba(255,255,255,0.9);
-            margin-bottom: 8px;
+            margin-bottom: 4px;
         }
 
         .round-info {
-            font-size: 16px;
-            color: rgba(255,255,255,0.8);
+            font-size: 15px;
+            color: rgba(255,255,255,0.75);
         }
 
         .player-name-large {
-            font-size: clamp(36px, 10vw, 72px);
+            font-size: clamp(32px, 9vw, 60px);
             font-weight: bold;
             color: white;
             text-shadow: 0 4px 10px rgba(0,0,0,0.3);
-            margin-bottom: 20px;
+            margin-bottom: 10px;
             animation: fadeIn 0.5s ease;
             text-align: center;
             word-wrap: break-word;
-            max-width: 90%;
+            max-width: 100%;
         }
 
         .time-display-large {
-            font-size: clamp(60px, 20vw, 120px);
+            font-size: clamp(56px, 18vw, 100px);
             font-weight: bold;
             color: white;
             font-family: 'Courier New', monospace;
-            text-shadow: 0 6px 20px rgba(0,0,0,0.4);
-            margin-bottom: 30px;
+            text-shadow: 0 6px 20px rgba(0,0,0,0.35);
+            margin-bottom: 28px;
             letter-spacing: 5px;
         }
 
@@ -689,14 +687,9 @@
             display: flex;
             flex-direction: column;
             align-items: center;
-            gap: 16px;
-            position: absolute;
-            bottom: 36px;
-            left: 50%;
-            transform: translateX(-50%);
-            z-index: 1000;
-            width: 90%;
-            max-width: 320px;
+            gap: 14px;
+            width: 100%;
+            max-width: 260px;
         }
 
         .timer-btn {
@@ -722,8 +715,8 @@
         }
 
         .timer-btn.next-btn {
-            width: 110px;
-            height: 110px;
+            width: 100px;
+            height: 100px;
             position: relative;
         }
 
@@ -743,13 +736,13 @@
         }
 
         .timer-btn.pause-btn {
-            width: 80px;
-            height: 80px;
+            width: 70px;
+            height: 70px;
         }
 
         .timer-btn.end-btn {
-            width: 58px;
-            height: 58px;
+            width: 52px;
+            height: 52px;
             opacity: 0.6;
         }
 
@@ -758,13 +751,14 @@
             top: 50%;
             left: 50%;
             transform: translate(-50%, -50%);
-            background: rgba(0,0,0,0.7);
+            background: rgba(0,0,0,0.6);
             color: white;
-            padding: 30px 60px;
-            border-radius: 20px;
-            font-size: 36px;
+            padding: 20px 50px;
+            border-radius: 16px;
+            font-size: 30px;
             font-weight: bold;
             display: none;
+            white-space: nowrap;
         }
 
         .paused-overlay.visible {
@@ -842,14 +836,22 @@
             color: rgba(255, 255, 255, 0.9);
         }
 
-        body:has(#timerScreen.active) .footer-credit.footer-outside,
         body:has(#orderPlayersScreen.active) .footer-credit.footer-outside {
             display: none;
         }
 
-        body:has(#timerScreen.active) .top-bar,
         body:has(#orderPlayersScreen.active) .top-bar {
             display: none;
+        }
+
+        #timerScreen.active ~ * {
+            display: none;
+        }
+
+        body:has(#timerScreen.active) .container {
+            background: transparent !important;
+            box-shadow: none !important;
+            padding: 10px 0 !important;
         }
 
         .footer-credit a {
@@ -1426,8 +1428,6 @@
             document.getElementById('timerFullscreen').style.backgroundColor = color;
             document.getElementById('currentPlayerName').textContent = currentPlayer;
             document.getElementById('timeDisplayLarge').textContent = formatTime(timerData.timeRemaining);
-            // Sincronizar el color del body para que las franjas del navegador móvil también cambien
-            document.body.style.background = color;
         }
 
         function startCountdown() {
@@ -1496,9 +1496,6 @@
                 timerData.interval = null;
             }
 
-            // Restaurar el fondo del body al salir del temporizador
-            document.body.style.background = '';
-
             // Si ya estamos en modo ronda a ronda activo o target_score, ir directo a la ronda pendiente
             const isActiveRoundMode = gameData.roundScores.length > 0 && (
                 (gameData.scoringType === 'rounds' && gameData.roundScoringMode === 'round_by_round') ||
@@ -1529,7 +1526,6 @@
         }
 
         function skipToScoring() {
-            document.body.style.background = '';
             document.getElementById('btnVolverTimer').style.display = 'inline-block';
             document.getElementById('gameDisplayScoring').textContent = gameData.gameName;
             showScreen('scoringSetupScreen');
