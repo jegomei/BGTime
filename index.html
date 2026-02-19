@@ -933,8 +933,48 @@
             opacity: 0.7;
         }
 
-        /* Pantalla de bienvenida sin contenedor */
-        #setupScreen .container {
+        .history-empty {
+            text-align: center;
+            color: var(--text-secondary);
+            padding: 40px 0;
+            font-size: 16px;
+        }
+
+        .history-card {
+            background: var(--table-row-alt);
+            border-radius: 10px;
+            padding: 14px 16px;
+            margin-bottom: 12px;
+            border-left: 4px solid var(--primary-color);
+        }
+
+        .history-card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: baseline;
+            margin-bottom: 8px;
+        }
+
+        .history-card-game {
+            font-weight: 700;
+            font-size: 17px;
+            color: var(--text-primary);
+        }
+
+        .history-card-date {
+            font-size: 12px;
+            color: var(--text-secondary);
+        }
+
+        .history-card-players {
+            font-size: 14px;
+            color: var(--text-secondary);
+            line-height: 1.6;
+        }
+
+        .history-card-winner {
+            color: var(--primary-color);
+            font-weight: 600;
             background: transparent !important;
             box-shadow: none !important;
             padding: 20px 15px !important;
@@ -948,6 +988,13 @@
             <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                 <path d="m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/>
                 <polyline points="9 22 9 12 15 12 15 22"/>
+            </svg>
+        </button>
+        <button class="top-bar-btn" onclick="showHistory()" aria-label="Historial">
+            <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M12 8v4l3 3"/>
+                <path d="M3.05 11a9 9 0 1 1 .5 4"/>
+                <path d="M3 16v-5h5"/>
             </svg>
         </button>
         <button id="themeToggle" class="top-bar-btn" onclick="toggleTheme()" aria-label="Cambiar tema">
@@ -1244,6 +1291,15 @@
                 <button onclick="resetGame()">Nueva Partida</button>
             </div>
         </div>
+
+        <!-- Pantalla 7: Historial -->
+        <div id="historyScreen" class="screen">
+            <h1>📜 Historial</h1>
+            <div id="historyContainer"></div>
+            <div class="button-group" style="margin-top: 16px;">
+                <button class="secondary" onclick="clearHistory()">🗑️ Borrar historial</button>
+            </div>
+        </div>
     </div>
     
     <div class="footer-credit footer-outside">
@@ -1328,6 +1384,8 @@
                     footer.style.display = 'block';
                 }
             }
+
+            saveAppState();
         }
 
         // Pantalla 1: Setup
@@ -2194,29 +2252,7 @@
                 score: gameData.roundScores[index].reduce((sum, score) => sum + score, 0)
             }));
             
-            results.sort((a, b) => b.score - a.score);
-            
-            document.getElementById('gameDisplayResults').textContent = gameData.gameName;
-            
-            const container = document.getElementById('resultsContainer');
-            container.innerHTML = '';
-            
-            results.forEach((result, index) => {
-                const div = document.createElement('div');
-                div.className = index === 0 ? 'result-item winner' : 'result-item';
-                div.innerHTML = `
-                    <div class="result-item-left">
-                        <span>${index + 1}. ${result.player}</span>
-                        ${index === 0 ? '<span class="winner-badge">🏆 GANADOR</span>' : ''}
-                    </div>
-                    <div class="result-item-right">
-                        <span>${result.score} puntos</span>
-                    </div>
-                `;
-                container.appendChild(div);
-            });
-            
-            showScreen('resultsScreen');
+            showFinalResults(results);
         }
 
         function createRoundWithItemsTable(container) {
@@ -2341,29 +2377,7 @@
                 return { player: player, score: total };
             });
             
-            results.sort((a, b) => b.score - a.score);
-            
-            document.getElementById('gameDisplayResults').textContent = gameData.gameName;
-            
-            const container = document.getElementById('resultsContainer');
-            container.innerHTML = '';
-            
-            results.forEach((result, index) => {
-                const div = document.createElement('div');
-                div.className = index === 0 ? 'result-item winner' : 'result-item';
-                div.innerHTML = `
-                    <div class="result-item-left">
-                        <span>${index + 1}. ${result.player}</span>
-                        ${index === 0 ? '<span class="winner-badge">🏆 GANADOR</span>' : ''}
-                    </div>
-                    <div class="result-item-right">
-                        <span>${result.score} puntos</span>
-                    </div>
-                `;
-                container.appendChild(div);
-            });
-            
-            showScreen('resultsScreen');
+            showFinalResults(results);
         }
 
         function updateTotal(playerIndex) {
@@ -2384,19 +2398,16 @@
             document.getElementById(`total-${playerIndex}`).textContent = total;
         }
 
-        function calculateResults() {
-            const results = gameData.players.map((player, index) => ({
-                player: player,
-                score: parseInt(document.getElementById(`total-${index}`).textContent)
-            }));
-            
+        function showFinalResults(results) {
             results.sort((a, b) => b.score - a.score);
-            
+
+            // Guardar para persistencia y historial
+            gameData.lastResults = results;
+            saveToHistory(results);
+
             document.getElementById('gameDisplayResults').textContent = gameData.gameName;
-            
             const container = document.getElementById('resultsContainer');
             container.innerHTML = '';
-            
             results.forEach((result, index) => {
                 const div = document.createElement('div');
                 div.className = index === 0 ? 'result-item winner' : 'result-item';
@@ -2411,8 +2422,16 @@
                 `;
                 container.appendChild(div);
             });
-            
             showScreen('resultsScreen');
+        }
+
+        function calculateResults() {
+            const results = gameData.players.map((player, index) => ({
+                player: player,
+                score: parseInt(document.getElementById(`total-${index}`).textContent)
+            }));
+            
+            showFinalResults(results);
         }
 
         function shareResults() {
@@ -2490,7 +2509,7 @@
                 shareText += playerLine + '\n';
             });
             
-            shareText += `\nBGTime — https://jegomei.github.io/BGTime/`;
+            shareText += `\nBGTime — https://jegomei.github.io/BG-clock-and-score/`;
             
             if (navigator.clipboard && navigator.clipboard.writeText) {
                 navigator.clipboard.writeText(shareText).then(() => {
@@ -2527,6 +2546,7 @@
             if (timerData.interval) {
                 clearInterval(timerData.interval);
             }
+            localStorage.removeItem('bgtime_state');
             
             gameData = {
                 gameName: '',
@@ -2597,6 +2617,150 @@
         const SVG_MOON = '<path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/>';
         const SVG_SUN  = '<circle cx="12" cy="12" r="4"/><line x1="12" y1="2" x2="12" y2="6"/><line x1="12" y1="18" x2="12" y2="22"/><line x1="4.93" y1="4.93" x2="7.76" y2="7.76"/><line x1="16.24" y1="16.24" x2="19.07" y2="19.07"/><line x1="2" y1="12" x2="6" y2="12"/><line x1="18" y1="12" x2="22" y2="12"/><line x1="4.93" y1="19.07" x2="7.76" y2="16.24"/><line x1="16.24" y1="7.76" x2="19.07" y2="4.93"/>';
 
+        // ── HISTORIAL ──────────────────────────────────────────────
+        function saveToHistory(results) {
+            const history = JSON.parse(localStorage.getItem('bgtime_history') || '[]');
+            const templateIndex = document.getElementById('templateSelect').value;
+            const tplEmoji = (templateIndex !== '' && typeof GAME_TEMPLATES !== 'undefined')
+                ? (GAME_TEMPLATES[parseInt(templateIndex)].emoji || '🎲')
+                : '🎲';
+
+            history.unshift({
+                id: Date.now(),
+                date: new Date().toLocaleDateString('es-ES', { day: '2-digit', month: '2-digit', year: '2-digit', hour: '2-digit', minute: '2-digit' }),
+                gameName: gameData.gameName,
+                emoji: tplEmoji,
+                results: results.map(r => ({ player: r.player, score: r.score }))
+            });
+
+            // Guardar máximo 50 partidas
+            localStorage.setItem('bgtime_history', JSON.stringify(history.slice(0, 50)));
+        }
+
+        let previousScreenId = 'setupScreen';
+
+        function showHistory() {
+            const activeScreen = document.querySelector('.screen.active');
+            if (activeScreen && activeScreen.id === 'historyScreen') {
+                showScreen(previousScreenId);
+                return;
+            }
+
+            if (activeScreen) previousScreenId = activeScreen.id;
+
+            const history = JSON.parse(localStorage.getItem('bgtime_history') || '[]');
+            const container = document.getElementById('historyContainer');
+            container.innerHTML = '';
+
+            if (history.length === 0) {
+                container.innerHTML = '<div class="history-empty">Aún no hay partidas guardadas.<br>¡Juega una partida para verla aquí!</div>';
+            } else {
+                history.forEach(entry => {
+                    const card = document.createElement('div');
+                    card.className = 'history-card';
+                    const playersHtml = entry.results.map((r, i) =>
+                        `<span${i === 0 ? ' class="history-card-winner"' : ''}>${i === 0 ? '👑 ' : ''}${r.player}: ${r.score} pts</span>`
+                    ).join(' · ');
+                    card.innerHTML = `
+                        <div class="history-card-header">
+                            <span class="history-card-game">${entry.emoji} ${entry.gameName}</span>
+                            <span class="history-card-date">${entry.date}</span>
+                        </div>
+                        <div class="history-card-players">${playersHtml}</div>
+                    `;
+                    container.appendChild(card);
+                });
+            }
+
+            // Mostrar la pantalla sin sobreescribir previousScreenId en saveAppState
+            document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+            document.getElementById('historyScreen').classList.add('active');
+        }
+
+        function clearHistory() {
+            if (confirm('¿Borrar todo el historial de partidas?')) {
+                localStorage.removeItem('bgtime_history');
+                showHistory();
+            }
+        }
+
+        // ── PERSISTENCIA DE ESTADO ─────────────────────────────────
+        function saveAppState() {
+            const activeScreen = document.querySelector('.screen.active');
+            if (!activeScreen) return;
+            const screenId = activeScreen.id;
+            // No persistir pantallas intermedias del temporizador (no restaurables fácilmente)
+            if (screenId === 'timerScreen') return;
+            try {
+                localStorage.setItem('bgtime_state', JSON.stringify({
+                    screenId,
+                    gameData,
+                    timerData: { ...timerData, interval: null }
+                }));
+            } catch(e) {}
+        }
+
+        function restoreAppState() {
+            try {
+                const saved = localStorage.getItem('bgtime_state');
+                if (!saved) return false;
+                const { screenId, gameData: gd, timerData: td } = JSON.parse(saved);
+                if (!screenId || !gd || screenId === 'setupScreen') return false;
+
+                // Restaurar gameData
+                Object.assign(gameData, gd);
+
+                // Restaurar timerData (sin intervalo)
+                Object.assign(timerData, td);
+                timerData.interval = null;
+
+                // Si estaba en pantalla de resultados, reconstruir la pantalla
+                if (screenId === 'resultsScreen') {
+                    renderResultsFromGameData();
+                }
+
+                // Si estaba puntuando, reconstruir la tabla
+                if (screenId === 'scoringScreen') {
+                    document.getElementById('gameDisplayFinal').textContent = gameData.gameName;
+                    const container = document.getElementById('scoringTableContainer');
+                    if (gameData.hasTemplate) {
+                        goToScoringScreenWithTemplate();
+                        return true;
+                    } else {
+                        showScreen(screenId);
+                        return true;
+                    }
+                }
+
+                showScreen(screenId);
+                return true;
+            } catch(e) {
+                localStorage.removeItem('bgtime_state');
+                return false;
+            }
+        }
+
+        function renderResultsFromGameData() {
+            if (!gameData.lastResults) return;
+            document.getElementById('gameDisplayResults').textContent = gameData.gameName;
+            const container = document.getElementById('resultsContainer');
+            container.innerHTML = '';
+            gameData.lastResults.forEach((result, index) => {
+                const div = document.createElement('div');
+                div.className = index === 0 ? 'result-item winner' : 'result-item';
+                div.innerHTML = `
+                    <div class="result-item-left">
+                        <span>${index + 1}. ${result.player}</span>
+                        ${index === 0 ? '<span class="winner-badge">🏆 GANADOR</span>' : ''}
+                    </div>
+                    <div class="result-item-right">
+                        <span>${result.score} puntos</span>
+                    </div>
+                `;
+                container.appendChild(div);
+            });
+        }
+
         function toggleTheme() {
             const body = document.body;
             const themeIcon = document.getElementById('themeIcon');
@@ -2641,6 +2805,9 @@
                 }
                 updateRemoveButtons();
             });
+
+            // Restaurar estado tras recarga
+            restoreAppState();
         });
     </script>
 </body>
