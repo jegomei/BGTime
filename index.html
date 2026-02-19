@@ -1751,7 +1751,7 @@
             gameData.items.forEach((item, itemIndex) => {
                 table += `<tr><td><strong>${item.name}${item.negative ? ' (-)' : ''}</strong></td>`;
                 gameData.players.forEach((player, playerIndex) => {
-                    table += `<td><input type="number" value="0" id="score-${playerIndex}-${itemIndex}" onchange="updateTotalItems(${playerIndex})"></td>`;
+                    table += `<td><input type="number" inputmode="numeric" pattern="[0-9]*" value="0" id="score-${playerIndex}-${itemIndex}" onchange="updateTotalItems(${playerIndex})"></td>`;
                 });
                 table += '</tr>';
             });
@@ -1778,7 +1778,7 @@
             for (let round = 0; round < gameData.numRounds; round++) {
                 html += `<tr><td><strong>R${round + 1}</strong></td>`;
                 gameData.players.forEach((player, playerIndex) => {
-                    html += `<td><input type="number" value="0" id="score-${playerIndex}-${round}" onchange="updateTotal(${playerIndex})"></td>`;
+                    html += `<td><input type="number" inputmode="numeric" pattern="[0-9]*" value="0" id="score-${playerIndex}-${round}" onchange="updateTotal(${playerIndex})"></td>`;
                 });
                 html += '</tr>';
             }
@@ -1818,7 +1818,7 @@
             `;
             
             gameData.players.forEach((player, playerIndex) => {
-                html += `<td><input type="number" value="0" id="round-score-${playerIndex}" style="width: 100%;"></td>`;
+                html += `<td><input type="number" inputmode="numeric" pattern="[0-9]*" value="0" id="round-score-${playerIndex}" style="width: 100%;"></td>`;
             });
             
             html += `
@@ -1933,7 +1933,7 @@
             html += `</tr></thead><tbody><tr><td><strong>Puntos ronda</strong></td>`;
 
             gameData.players.forEach((player, playerIndex) => {
-                html += `<td><input type="number" value="0" id="round-score-${playerIndex}" style="width: 100%;"></td>`;
+                html += `<td><input type="number" inputmode="numeric" pattern="[0-9]*" value="0" id="round-score-${playerIndex}" style="width: 100%;"></td>`;
             });
 
             html += `</tr><tr class="total-row"><td><strong>Total</strong></td>`;
@@ -2038,7 +2038,7 @@
             gameData.roundItems.forEach((item, itemIndex) => {
                 html += `<tr><td><strong>${item.name}${item.negative ? ' (-)' : ''}</strong></td>`;
                 gameData.players.forEach((player, playerIndex) => {
-                    html += `<td><input type="number" value="0" id="round-item-${playerIndex}-${itemIndex}" style="width: 100%;"></td>`;
+                    html += `<td><input type="number" inputmode="numeric" pattern="[0-9]*" value="0" id="round-item-${playerIndex}-${itemIndex}" style="width: 100%;"></td>`;
                 });
                 html += '</tr>';
             });
