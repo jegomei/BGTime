@@ -148,22 +148,20 @@
 
         .logo-container {
             width: 100%;
-            max-width: 300px;
-            margin-bottom: 30px;
+            max-width: 160px;
+            margin-bottom: 20px;
         }
 
         .app-logo {
             width: 100%;
             height: auto;
             display: block;
+            color: var(--primary-color);
+            filter: drop-shadow(0 4px 12px rgba(0,0,0,0.2));
         }
 
-        .app-logo[src="logo.png"] {
-            display: none;
-        }
-
-        .app-logo:not([src="logo.png"]) {
-            display: block;
+        body.dark-theme .app-logo {
+            color: rgba(255, 255, 255, 0.9);
         }
 
         .welcome-title {
@@ -584,7 +582,9 @@
         .result-item {
             display: flex;
             justify-content: space-between;
-            padding: 15px;
+            align-items: center;
+            gap: 10px;
+            padding: 14px 15px;
             background: #f8f9fa;
             border-radius: 8px;
             margin-bottom: 10px;
@@ -597,12 +597,28 @@
             border: 3px solid #f39c12;
         }
 
+        .result-item-left {
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+            min-width: 0;
+        }
+
+        .result-item-right {
+            display: flex;
+            flex-direction: column;
+            align-items: flex-end;
+            gap: 4px;
+            flex-shrink: 0;
+        }
+
         .winner-badge {
             background: #f39c12;
             color: white;
-            padding: 5px 15px;
+            padding: 3px 10px;
             border-radius: 20px;
-            font-size: 14px;
+            font-size: 13px;
+            white-space: nowrap;
         }
 
         .order-container {
@@ -946,7 +962,14 @@
         <div id="setupScreen" class="screen active">
             <div class="welcome-screen">
                 <div class="logo-container">
-                    <img src="logo.png" alt="Board Game Tracker" id="appLogo" class="app-logo">
+                    <svg id="appLogo" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" class="app-logo">
+                        <rect width="12" height="12" x="2" y="10" rx="2" ry="2"/>
+                        <path d="m17.92 14 3.5-3.5a2.24 2.24 0 0 0 0-3l-5-4.92a2.24 2.24 0 0 0-3 0L10 6"/>
+                        <path d="M6 18h.01"/>
+                        <path d="M10 14h.01"/>
+                        <path d="M15 6h.01"/>
+                        <path d="M18 9h.01"/>
+                    </svg>
                 </div>
                 
                 <h1 class="welcome-title">¿A qué jugamos hoy?</h1>
@@ -2182,8 +2205,13 @@
                 const div = document.createElement('div');
                 div.className = index === 0 ? 'result-item winner' : 'result-item';
                 div.innerHTML = `
-                    <span>${index + 1}. ${result.player}</span>
-                    <span>${result.score} puntos ${index === 0 ? '<span class="winner-badge">🏆 GANADOR</span>' : ''}</span>
+                    <div class="result-item-left">
+                        <span>${index + 1}. ${result.player}</span>
+                        ${index === 0 ? '<span class="winner-badge">🏆 GANADOR</span>' : ''}
+                    </div>
+                    <div class="result-item-right">
+                        <span>${result.score} puntos</span>
+                    </div>
                 `;
                 container.appendChild(div);
             });
@@ -2324,8 +2352,13 @@
                 const div = document.createElement('div');
                 div.className = index === 0 ? 'result-item winner' : 'result-item';
                 div.innerHTML = `
-                    <span>${index + 1}. ${result.player}</span>
-                    <span>${result.score} puntos ${index === 0 ? '<span class="winner-badge">🏆 GANADOR</span>' : ''}</span>
+                    <div class="result-item-left">
+                        <span>${index + 1}. ${result.player}</span>
+                        ${index === 0 ? '<span class="winner-badge">🏆 GANADOR</span>' : ''}
+                    </div>
+                    <div class="result-item-right">
+                        <span>${result.score} puntos</span>
+                    </div>
                 `;
                 container.appendChild(div);
             });
@@ -2368,8 +2401,13 @@
                 const div = document.createElement('div');
                 div.className = index === 0 ? 'result-item winner' : 'result-item';
                 div.innerHTML = `
-                    <span>${index + 1}. ${result.player}</span>
-                    <span>${result.score} puntos ${index === 0 ? '<span class="winner-badge">🏆 GANADOR</span>' : ''}</span>
+                    <div class="result-item-left">
+                        <span>${index + 1}. ${result.player}</span>
+                        ${index === 0 ? '<span class="winner-badge">🏆 GANADOR</span>' : ''}
+                    </div>
+                    <div class="result-item-right">
+                        <span>${result.score} puntos</span>
+                    </div>
                 `;
                 container.appendChild(div);
             });
