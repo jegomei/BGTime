@@ -389,6 +389,13 @@
             background: #27ae60;
         }
 
+        .add-player-btn:disabled {
+            background: var(--button-secondary);
+            cursor: not-allowed;
+            opacity: 0.7;
+            transform: none;
+        }
+
         .timer-container {
             display: grid;
             grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
@@ -942,7 +949,7 @@
                         <button onclick="removePlayerInput(this)" class="remove-player-btn" style="display: none;">✕</button>
                     </div>
                 </div>
-                <button class="add-player-btn" onclick="addPlayerInput()">+ Añadir Jugador</button>
+                <button id="addPlayerBtn" class="add-player-btn" onclick="addPlayerInput()">+ Añadir Jugador</button>
                 <div id="playersError" class="error"></div>
             </div>
 
@@ -1278,6 +1285,7 @@
             document.getElementById('gameNameError').textContent = '';
             
             showScreen('playersScreen');
+            updateRemoveButtons();
             
             setTimeout(() => {
                 const firstInput = document.querySelector('.player-name');
@@ -1294,8 +1302,17 @@
             gameData.roundItems        = (tpl.roundItems       || []).map(i => ({ ...i }));
         }
 
+        function getActiveMaxPlayers() {
+            const select = document.getElementById('templateSelect');
+            if (select.value === '' || typeof GAME_TEMPLATES === 'undefined') return null;
+            return GAME_TEMPLATES[parseInt(select.value)].maxPlayers || null;
+        }
+
         function addPlayerInput() {
             const container = document.getElementById('playersContainer');
+            const max = getActiveMaxPlayers();
+            if (max !== null && container.children.length >= max) return;
+
             const playerNum = container.children.length + 1;
             const defaultColor = defaultPlayerColors[playerNum % defaultPlayerColors.length];
             
@@ -1318,14 +1335,24 @@
 
         function updateRemoveButtons() {
             const rows = document.querySelectorAll('.player-input-row');
+            const max = getActiveMaxPlayers();
+            const addBtn = document.getElementById('addPlayerBtn');
+
             rows.forEach((row) => {
                 const btn = row.querySelector('.remove-player-btn');
-                if (rows.length > 2) {
-                    btn.style.display = 'block';
-                } else {
-                    btn.style.display = 'none';
-                }
+                btn.style.display = rows.length > 2 ? 'block' : 'none';
             });
+
+            if (max !== null) {
+                const atMax = rows.length >= max;
+                addBtn.disabled = atMax;
+                addBtn.textContent = atMax
+                    ? `Máximo ${max} jugadores`
+                    : `+ Añadir Jugador (máx. ${max})`;
+            } else {
+                addBtn.disabled = false;
+                addBtn.textContent = '+ Añadir Jugador';
+            }
         }
 
         function startGame(destination) {
@@ -2479,6 +2506,7 @@
                     document.getElementById('gameName').value = tpl.name;
                     document.getElementById('gameNameError').textContent = '';
                 }
+                updateRemoveButtons();
             });
         });
     </script>
