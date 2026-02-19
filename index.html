@@ -1062,6 +1062,7 @@
 
             <div class="button-group">
                 <button onclick="calculateResults()">Calcular Resultados</button>
+                <button id="btnVolverTimerScoring" class="secondary" style="display:none;" onclick="returnToTimerFromScoring()">⏱️ Volver al Temporizador</button>
             </div>
         </div>
 
@@ -1348,6 +1349,8 @@
             document.getElementById('timerFullscreen').style.backgroundColor = color;
             document.getElementById('currentPlayerName').textContent = currentPlayer;
             document.getElementById('timeDisplayLarge').textContent = formatTime(timerData.timeRemaining);
+            // Sincronizar el color del body para que las franjas del navegador móvil también cambien
+            document.body.style.background = color;
         }
 
         function startCountdown() {
@@ -1417,10 +1420,20 @@
                 clearInterval(timerData.interval);
                 timerData.interval = null;
             }
-            
-            document.getElementById('btnVolverTimer').style.display = 'inline-block';
-            document.getElementById('gameDisplayScoring').textContent = gameData.gameName;
-            showScreen('scoringSetupScreen');
+
+            // Restaurar el fondo del body al salir del temporizador
+            document.body.style.background = '';
+
+            // Si ya estamos en modo ronda a ronda activo, ir directo a la ronda pendiente
+            if (gameData.scoringType === 'rounds' && gameData.roundScoringMode === 'round_by_round' && gameData.roundScores.length > 0) {
+                document.getElementById('gameDisplayFinal').textContent = gameData.gameName;
+                createRoundByRoundTable(document.getElementById('scoringTableContainer'));
+                showScreen('scoringScreen');
+            } else {
+                document.getElementById('btnVolverTimer').style.display = 'inline-block';
+                document.getElementById('gameDisplayScoring').textContent = gameData.gameName;
+                showScreen('scoringSetupScreen');
+            }
         }
 
         function returnToTimer() {
@@ -1431,6 +1444,7 @@
         }
 
         function skipToScoring() {
+            document.body.style.background = '';
             document.getElementById('btnVolverTimer').style.display = 'inline-block';
             document.getElementById('gameDisplayScoring').textContent = gameData.gameName;
             showScreen('scoringSetupScreen');
@@ -1674,8 +1688,17 @@
             container.innerHTML = html;
             
             const continueBtn = document.querySelector('#scoringScreen .button-group button:first-child');
+            const timerBtn = document.getElementById('btnVolverTimerScoring');
+
+            // Mostrar botón de volver al temporizador solo si se usó y no es la última ronda
+            if (gameData.usedTimer && gameData.currentRound < gameData.numRounds) {
+                timerBtn.style.display = 'inline-block';
+            } else {
+                timerBtn.style.display = 'none';
+            }
+
             if (gameData.currentRound < gameData.numRounds) {
-                continueBtn.textContent = 'Siguiente Ronda →';
+                continueBtn.textContent = 'Guardar Ronda →';
                 continueBtn.onclick = saveRoundAndContinue;
             } else {
                 continueBtn.textContent = 'Calcular Resultados';
@@ -1690,7 +1713,28 @@
             });
             
             gameData.currentRound++;
-            createRoundByRoundTable(document.getElementById('scoringTableContainer'));
+
+            // Si se usó temporizador, volver a él para jugar la siguiente ronda
+            if (gameData.usedTimer) {
+                returnToTimerFromScoring();
+            } else {
+                createRoundByRoundTable(document.getElementById('scoringTableContainer'));
+            }
+        }
+
+        function returnToTimerFromScoring() {
+            showScreen('timerScreen');
+            // Reiniciar el temporizador para la nueva ronda
+            timerData.currentPlayerIndex = 0;
+            if (gameData.timerMode === 'chess') {
+                timerData.timeRemaining = timerData.playerTimeRemaining[0];
+            } else {
+                timerData.timeRemaining = gameData.timePerPlayer;
+            }
+            timerData.isPaused = false;
+            document.getElementById('pauseBtn').innerHTML = '<span style="font-size: 24px;">⏸️</span><br>Pausar';
+            updateTimerDisplay();
+            startCountdown();
         }
 
         function saveRoundAndFinish() {
