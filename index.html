@@ -2183,9 +2183,9 @@
                 </div>
             </div>
 
-            <div class="button-group">
-                <button onclick="setupScoring()">Continuar</button>
-                <button id="btnVolverTimer" class="secondary" onclick="returnToTimer()" style="display:flex;align-items:center;justify-content:center;gap:6px;"><svg xmlns="http://www.w3.org/2000/svg" width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:block;flex-shrink:0;"><circle cx="12" cy="12" r="9"/><polyline points="12 7 12 12 15 15"/></svg>Volver al Temporizador</button>
+            <div class="button-group" style="justify-content:space-between;">
+                <button id="btnVolverTimer" class="secondary" onclick="returnToTimer()" style="display:none;align-items:center;justify-content:center;gap:6px;flex:0 0 auto;"><svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:block;flex-shrink:0;"><circle cx="12" cy="12" r="9"/><polyline points="12 7 12 12 15 15"/></svg>Volver</button>
+                <button onclick="setupScoring()" style="flex:1;">Continuar</button>
             </div>
         </div>
 
@@ -3049,10 +3049,10 @@
                 showScreen('scoringScreen');
             } else if (gameData.hasTemplate) {
                 // Hay plantilla aplicada, saltar configuración
-                document.getElementById('btnVolverTimer').style.display = 'inline-block';
+                document.getElementById('btnVolverTimer').style.display = 'flex';
                 goToScoringScreenWithTemplate();
             } else {
-                document.getElementById('btnVolverTimer').style.display = 'inline-block';
+                document.getElementById('btnVolverTimer').style.display = 'flex';
                 document.getElementById('gameDisplayScoring').textContent = gameData.gameName;
                 showScreen('scoringSetupScreen');
             }
@@ -3081,7 +3081,7 @@
         }
 
         function skipToScoring() {
-            document.getElementById('btnVolverTimer').style.display = 'inline-block';
+            document.getElementById('btnVolverTimer').style.display = 'flex';
             if (gameData.hasTemplate) {
                 goToScoringScreenWithTemplate();
             } else {
