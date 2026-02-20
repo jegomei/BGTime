@@ -2428,6 +2428,15 @@
             return `${mins}:${secs.toString().padStart(2, '0')}`;
         }
 
+        function getPlayerTimeSub(playerName) {
+            if (!gameData.usedTimer || !gameData.playerTotalTimes || !gameData.orderedPlayers) return '';
+            const idx = gameData.orderedPlayers.indexOf(playerName);
+            if (idx === -1) return '';
+            const secs = (gameData.playerTotalTimes[idx] || 0) + (timerData.playerTimeUsed ? (timerData.playerTimeUsed[idx] || 0) : 0);
+            if (secs <= 0) return '';
+            return `<span style="display:block;font-size:10px;font-weight:400;opacity:0.75;letter-spacing:0.3px;margin-top:2px;font-family:'DM Mono',monospace;">${formatTime(secs)}</span>`;
+        }
+
         function stepRounds(delta) {
             const input = document.getElementById('numRounds');
             const display = document.getElementById('numRoundsDisplay');
@@ -3280,7 +3289,7 @@
             let table = '<div class="table-wrapper"><table class="score-table"><thead><tr><th>Ítem</th>';
             
             gameData.players.forEach(player => {
-                table += `<th>${player}</th>`;
+                table += `<th>${player}${getPlayerTimeSub(player)}</th>`;
             });
             table += '</tr></thead><tbody>';
             
@@ -3319,7 +3328,7 @@
             html += '<table class="score-table"><thead><tr><th>Ronda</th>';
             
             gameData.players.forEach(player => {
-                html += `<th>${player}</th>`;
+                html += `<th>${player}${getPlayerTimeSub(player)}</th>`;
             });
             html += '</tr></thead><tbody>';
             
@@ -3366,7 +3375,7 @@
             `;
             
             gameData.players.forEach(player => {
-                html += `<th>${player}</th>`;
+                html += `<th>${player}${getPlayerTimeSub(player)}</th>`;
             });
             
             html += `</tr></thead><tbody>`;
@@ -3503,7 +3512,7 @@
             `;
 
             gameData.players.forEach(player => {
-                html += `<th>${player}</th>`;
+                html += `<th>${player}${getPlayerTimeSub(player)}</th>`;
             });
 
             html += `</tr></thead><tbody>`;
@@ -3608,7 +3617,7 @@
             `;
             
             gameData.players.forEach(player => {
-                html += `<th>${player}</th>`;
+                html += `<th>${player}${getPlayerTimeSub(player)}</th>`;
             });
             
             html += `</tr></thead><tbody>`;
