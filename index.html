@@ -130,11 +130,28 @@
 
         .screen {
             display: none;
+            animation-duration: 0.32s;
+            animation-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+            animation-fill-mode: both;
         }
 
         .screen.active {
             display: block;
         }
+
+        /* Entrando desde la derecha (avanzar) */
+        @keyframes slideInRight {
+            from { opacity: 0; transform: translateX(40px); }
+            to   { opacity: 1; transform: translateX(0); }
+        }
+        /* Entrando desde la izquierda (retroceder) */
+        @keyframes slideInLeft {
+            from { opacity: 0; transform: translateX(-40px); }
+            to   { opacity: 1; transform: translateX(0); }
+        }
+
+        .screen.slide-in-right  { animation-name: slideInRight; }
+        .screen.slide-in-left   { animation-name: slideInLeft; }
 
         .welcome-screen {
             display: flex;
@@ -477,43 +494,68 @@
         }
 
         .score-table {
-            width: 100%;
             border-collapse: collapse;
-            margin-top: 20px;
-            display: block;
-            overflow-x: auto;
-            -webkit-overflow-scrolling: touch;
-        }
-
-        .score-table thead,
-        .score-table tbody,
-        .score-table tr {
-            display: table;
-            width: 100%;
-            table-layout: fixed;
+            table-layout: auto;
+            width: max-content;
+            min-width: 100%;
         }
 
         .score-table th,
         .score-table td {
-            padding: 10px 5px;
+            padding: 10px 8px;
             border: 1px solid var(--border-color);
             text-align: center;
             font-size: 14px;
-            min-width: 60px;
+            white-space: nowrap;
             color: var(--text-primary);
         }
 
         .score-table th {
             background: var(--table-header-bg);
             color: var(--table-header-text);
+        }
+
+        /* Columna de ítems: sticky, ancho fijo, texto con salto de línea */
+        .score-table td:first-child,
+        .score-table th:first-child {
             position: sticky;
-            top: 0;
-            z-index: 10;
+            left: 0;
+            z-index: 5;
+            font-weight: 600;
+            min-width: 110px;
+            max-width: 140px;
+            white-space: normal;
+            word-break: break-word;
+            text-align: left;
+            padding-left: 10px;
+            background: var(--table-row-bg);
+            box-shadow: 2px 0 5px rgba(0,0,0,0.08);
+        }
+
+        /* Filas alternas */
+        .score-table tbody tr:nth-child(even) td {
+            background: var(--table-row-alt);
+        }
+
+        .score-table tbody tr:nth-child(even) td:first-child {
+            background: var(--table-row-alt);
+        }
+
+        .score-table th:first-child {
+            background: var(--table-header-bg);
+            color: var(--table-header-text);
+            z-index: 15;
+        }
+
+        /* Columnas de jugadores: ancho fijo cómodo para el input */
+        .score-table th:not(:first-child),
+        .score-table td:not(:first-child) {
+            min-width: 80px;
+            width: 80px;
         }
 
         .score-table input {
-            width: 100%;
-            max-width: 70px;
+            width: 64px;
             padding: 8px 4px;
             text-align: center;
             font-size: 16px;
@@ -523,28 +565,14 @@
             color: var(--text-primary);
         }
 
-        .score-table td:first-child,
-        .score-table th:first-child {
-            position: sticky;
-            left: 0;
-            background: var(--table-row-bg);
-            z-index: 5;
-            font-weight: 600;
-            min-width: 80px;
-        }
-
         .score-table .total-row td {
             background: var(--table-total-bg) !important;
             color: var(--text-primary) !important;
+            font-weight: bold;
         }
 
         .score-table .total-row td:first-child {
             background: var(--table-total-bg) !important;
-        }
-
-        .score-table th:first-child {
-            background: var(--table-header-bg);
-            z-index: 15;
         }
 
         .scoring-item {
@@ -860,10 +888,12 @@
         }
 
         .table-wrapper {
+            width: 100%;
             overflow-x: auto;
             -webkit-overflow-scrolling: touch;
-            margin: 20px -15px;
-            padding: 0 15px;
+            margin-top: 20px;
+            border-radius: 8px;
+            border: 1px solid var(--border-color);
         }
 
         .error {
@@ -979,6 +1009,141 @@
             box-shadow: none !important;
             padding: 20px 15px !important;
         }
+
+        /* ── Modal confirmación reset ── */
+        .confirm-modal-overlay {
+            position: fixed;
+            inset: 0;
+            z-index: 2000;
+            background: rgba(0,0,0,0.55);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+        .confirm-modal-box {
+            background: var(--container-bg);
+            border-radius: 18px;
+            padding: 28px 24px 20px;
+            text-align: center;
+            width: 100%;
+            max-width: 320px;
+            box-shadow: 0 8px 32px rgba(0,0,0,0.35);
+            animation: modalIn 0.18s ease;
+        }
+        @keyframes modalIn {
+            from { transform: scale(0.88); opacity: 0; }
+            to   { transform: scale(1);    opacity: 1; }
+        }
+        .confirm-modal-icon { font-size: 40px; margin-bottom: 10px; }
+        .confirm-modal-title {
+            font-size: 19px;
+            font-weight: 700;
+            color: var(--text-primary);
+            margin: 0 0 8px;
+        }
+        .confirm-modal-desc {
+            font-size: 14px;
+            color: var(--text-secondary);
+            margin: 0 0 22px;
+        }
+        .confirm-modal-actions {
+            display: flex;
+            gap: 10px;
+        }
+        .confirm-modal-cancel,
+        .confirm-modal-ok {
+            flex: 1;
+            margin: 0;
+            padding: 13px 0;
+            border-radius: 10px;
+            font-size: 16px;
+            font-weight: 600;
+            min-height: 48px;
+        }
+        .confirm-modal-cancel {
+            background: var(--button-secondary);
+        }
+        .confirm-modal-cancel:active { background: var(--button-secondary-hover); }
+        .confirm-modal-ok {
+            background: #e74c3c;
+        }
+        .confirm-modal-ok:active { background: #c0392b; }
+
+        /* ── Autocomplete biblioteca ── */
+        .library-input-wrap {
+            position: relative;
+            display: flex;
+            align-items: center;
+        }
+        .library-icon {
+            position: absolute;
+            left: 18px;
+            font-size: 20px;
+            pointer-events: none;
+            z-index: 1;
+        }
+        .library-search-input {
+            width: 100%;
+            padding-left: 48px !important;
+            padding-right: 44px !important;
+        }
+        .library-clear-btn {
+            position: absolute;
+            right: 12px;
+            background: none;
+            border: none;
+            color: var(--text-secondary);
+            font-size: 16px;
+            padding: 4px 6px;
+            margin: 0;
+            min-height: unset;
+            cursor: pointer;
+            line-height: 1;
+            -webkit-tap-highlight-color: transparent;
+        }
+        .library-clear-btn:active { background: none; transform: none; }
+        .library-dropdown {
+            position: absolute;
+            top: calc(100% + 6px);
+            left: 0;
+            right: 0;
+            background: var(--container-bg);
+            border: 2px solid var(--primary-color);
+            border-radius: 12px;
+            max-height: 240px;
+            overflow-y: auto;
+            -webkit-overflow-scrolling: touch;
+            z-index: 500;
+            list-style: none;
+            padding: 6px 0;
+            box-shadow: 0 8px 24px rgba(0,0,0,0.18);
+        }
+        .library-dropdown li {
+            padding: 11px 16px;
+            font-size: 16px;
+            color: var(--text-primary);
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            border-radius: 0;
+            transition: background 0.12s;
+        }
+        .library-dropdown li:active,
+        .library-dropdown li.highlighted {
+            background: var(--table-row-alt);
+        }
+        .library-dropdown li .lib-match {
+            color: var(--primary-color);
+            font-weight: 700;
+        }
+        .library-dropdown-empty {
+            padding: 14px 16px;
+            color: var(--text-secondary);
+            font-size: 15px;
+            text-align: center;
+        }
     </style>
     <script src="games.js"></script>
 </head>
@@ -1031,10 +1196,18 @@
                     <div id="gameNameError" class="error"></div>
                 </div>
 
-                <div id="templateSection" style="width: 100%; max-width: 500px; margin-top: -4px;">
-                    <select id="templateSelect" class="game-input-large" style="width: 100%; -webkit-appearance: none; appearance: none;">
-                        <option value="">📚 Biblioteca de juegos</option>
-                    </select>
+                <div id="templateSection" style="width: 100%; max-width: 500px; margin-top: -4px; position: relative;">
+                    <!-- Hidden field keeps the numeric index used by the rest of the JS -->
+                    <input type="hidden" id="templateSelect" value="">
+                    <div class="library-input-wrap">
+                        <span class="library-icon">📚</span>
+                        <input type="text" id="librarySearch" class="game-input-large library-search-input"
+                               placeholder="Buscar en la biblioteca…"
+                               autocomplete="off" autocorrect="off" spellcheck="false"
+                               oninput="filterLibrary()" onfocus="openLibraryDropdown()" onblur="scheduleCloseLibrary()">
+                        <button class="library-clear-btn" id="libraryClearBtn" onclick="clearLibrarySelection()" style="display:none;" tabindex="-1">✕</button>
+                    </div>
+                    <ul id="libraryDropdown" class="library-dropdown" style="display:none;"></ul>
                 </div>
             </div>
         </div>
@@ -1297,6 +1470,9 @@
             <h1>📜 Historial</h1>
             <div id="historyContainer"></div>
             <div class="button-group" style="margin-top: 16px;">
+                <button onclick="exportHistory()">⬇️ Exportar</button>
+                <button onclick="triggerImport()">⬆️ Importar</button>
+                <input type="file" id="importFileInput" accept=".json" style="display:none;" onchange="importHistory(event)">
                 <button class="secondary" onclick="clearHistory()">🗑️ Borrar historial</button>
             </div>
         </div>
@@ -1304,6 +1480,31 @@
     
     <div class="footer-credit footer-outside">
         Un proyecto de <strong>Álvaro Iregui</strong>
+    </div>
+
+    <!-- Modal de confirmación para volver al inicio -->
+    <div id="confirmResetModal" class="confirm-modal-overlay" style="display:none;" onclick="closeConfirmModal(event)">
+        <div class="confirm-modal-box">
+            <div class="confirm-modal-icon">🏠</div>
+            <p class="confirm-modal-title">¿Volver al inicio?</p>
+            <p class="confirm-modal-desc">Se perderán los datos de la partida en curso.</p>
+            <div class="confirm-modal-actions">
+                <button class="confirm-modal-cancel" onclick="closeConfirmModal()">Cancelar</button>
+                <button class="confirm-modal-ok" onclick="confirmReset()">Sí, salir</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="confirmClearHistoryModal" class="confirm-modal-overlay" style="display:none;" onclick="closeClearHistoryModal(event)">
+        <div class="confirm-modal-box">
+            <div class="confirm-modal-icon">🗑️</div>
+            <p class="confirm-modal-title">¿Borrar historial?</p>
+            <p class="confirm-modal-desc">Se eliminarán todas las partidas guardadas. Esta acción no se puede deshacer.</p>
+            <div class="confirm-modal-actions">
+                <button class="confirm-modal-cancel" onclick="closeClearHistoryModal()">Cancelar</button>
+                <button class="confirm-modal-ok" onclick="confirmClearHistory()">Sí, borrar</button>
+            </div>
+        </div>
     </div>
 
     <script>
@@ -1370,12 +1571,50 @@
             document.getElementById('optionsChess').style.display = mode === 'chess' ? 'block' : 'none';
         }
 
-        function showScreen(screenId) {
+        // Orden de las pantallas en el flujo principal (para determinar dirección)
+        const SCREEN_ORDER = [
+            'setupScreen', 'playersScreen', 'timerChoiceScreen',
+            'orderPlayersScreen', 'timerScreen', 'scoringSetupScreen',
+            'scoringScreen', 'resultsScreen'
+        ];
+
+        let _currentScreenId = 'setupScreen';
+
+        function showScreen(screenId, forceDirection) {
+            const incoming = document.getElementById(screenId);
+            if (!incoming) return;
+
+            // Determinar dirección: 1 = avanzar (slide desde derecha), -1 = retroceder (slide desde izquierda)
+            let direction = 1;
+            if (forceDirection !== undefined) {
+                direction = forceDirection;
+            } else {
+                const fromIdx = SCREEN_ORDER.indexOf(_currentScreenId);
+                const toIdx   = SCREEN_ORDER.indexOf(screenId);
+                if (fromIdx !== -1 && toIdx !== -1) {
+                    direction = toIdx >= fromIdx ? 1 : -1;
+                }
+                // historyScreen siempre entra desde la derecha
+                if (screenId === 'historyScreen') direction = 1;
+            }
+
+            // Ocultar todas salvo la entrante
             document.querySelectorAll('.screen').forEach(screen => {
-                screen.classList.remove('active');
+                if (screen.id !== screenId) {
+                    screen.classList.remove('active', 'slide-in-right', 'slide-in-left');
+                    screen.style.display = 'none';
+                }
             });
-            document.getElementById(screenId).classList.add('active');
-            
+
+            // Aplicar animación y mostrar
+            incoming.classList.remove('slide-in-right', 'slide-in-left');
+            // Forzar reflow para reiniciar la animación si la pantalla ya era activa
+            void incoming.offsetWidth;
+            incoming.style.display = '';
+            incoming.classList.add('active', direction >= 0 ? 'slide-in-right' : 'slide-in-left');
+
+            _currentScreenId = screenId;
+
             const footer = document.querySelector('.footer-credit.footer-outside');
             if (footer) {
                 if (screenId === 'timerScreen' || screenId === 'orderPlayersScreen') {
@@ -2542,7 +2781,29 @@
             document.body.removeChild(textArea);
         }
 
+        const SAFE_SCREENS = new Set(["setupScreen", "resultsScreen", "historyScreen"]);
+
         function resetGame() {
+            const activeScreen = document.querySelector(".screen.active");
+            const screenId = activeScreen ? activeScreen.id : "setupScreen";
+            if (!SAFE_SCREENS.has(screenId)) {
+                document.getElementById("confirmResetModal").style.display = "flex";
+                return;
+            }
+            doResetGame();
+        }
+
+        function confirmReset() {
+            closeConfirmModal();
+            doResetGame();
+        }
+
+        function closeConfirmModal(e) {
+            if (e && e.target !== document.getElementById("confirmResetModal")) return;
+            document.getElementById("confirmResetModal").style.display = "none";
+        }
+
+        function doResetGame() {
             if (timerData.interval) {
                 clearInterval(timerData.interval);
             }
@@ -2585,7 +2846,7 @@
             document.getElementById('gameName').value = '';
             document.getElementById('gameNameError').textContent = '';
             document.getElementById('reorderEachRound').checked = true;
-            document.getElementById('templateSelect').value = '';
+            clearLibrarySelection();
             document.getElementById('playersContainer').innerHTML = `
                 <div class="player-input-row">
                     <input type="text" placeholder="Nombre del jugador 1" class="player-name">
@@ -2642,7 +2903,7 @@
         function showHistory() {
             const activeScreen = document.querySelector('.screen.active');
             if (activeScreen && activeScreen.id === 'historyScreen') {
-                showScreen(previousScreenId);
+                showScreen(previousScreenId, -1);
                 return;
             }
 
@@ -2672,16 +2933,23 @@
                 });
             }
 
-            // Mostrar la pantalla sin sobreescribir previousScreenId en saveAppState
-            document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
-            document.getElementById('historyScreen').classList.add('active');
+            // Mostrar usando showScreen para que tenga animación
+            showScreen('historyScreen', 1);
         }
 
         function clearHistory() {
-            if (confirm('¿Borrar todo el historial de partidas?')) {
-                localStorage.removeItem('bgtime_history');
-                showHistory();
-            }
+            document.getElementById('confirmClearHistoryModal').style.display = 'flex';
+        }
+
+        function confirmClearHistory() {
+            closeClearHistoryModal();
+            localStorage.removeItem('bgtime_history');
+            showHistory();
+        }
+
+        function closeClearHistoryModal(e) {
+            if (e && e.target !== document.getElementById('confirmClearHistoryModal')) return;
+            document.getElementById('confirmClearHistoryModal').style.display = 'none';
         }
 
         // ── PERSISTENCIA DE ESTADO ─────────────────────────────────
@@ -2785,30 +3053,181 @@
                 themeIcon.innerHTML = SVG_SUN;
             }
 
-            // Poblar la Biblioteca con las plantillas de games.js
-            const select = document.getElementById('templateSelect');
+            // Poblar la Biblioteca con las plantillas de games.js (ordenado alfabéticamente)
             if (typeof GAME_TEMPLATES !== 'undefined' && GAME_TEMPLATES.length > 0) {
-                GAME_TEMPLATES.forEach((tpl, i) => {
-                    const opt = document.createElement('option');
-                    opt.value = i;
-                    opt.textContent = `${tpl.emoji || '🎲'} ${tpl.name}`;
-                    select.appendChild(opt);
-                });
+                buildLibraryIndex();
             }
-
-            // Al seleccionar un juego de la biblioteca, rellenar el nombre automáticamente
-            select.addEventListener('change', function() {
-                if (this.value !== '') {
-                    const tpl = GAME_TEMPLATES[parseInt(this.value)];
-                    document.getElementById('gameName').value = tpl.name;
-                    document.getElementById('gameNameError').textContent = '';
-                }
-                updateRemoveButtons();
-            });
 
             // Restaurar estado tras recarga
             restoreAppState();
         });
+
+        // ── AUTOCOMPLETE BIBLIOTECA ────────────────────────────────
+        // Índice ordenado: [{index, name, emoji, label}]
+        let _libraryIndex = [];
+        let _libraryCloseTimer = null;
+
+        function normStr(s) {
+            return s.normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase();
+        }
+
+        function buildLibraryIndex() {
+            _libraryIndex = GAME_TEMPLATES
+                .map((tpl, i) => ({
+                    index: i,
+                    name: tpl.name,
+                    emoji: tpl.emoji || '🎲',
+                    label: `${tpl.emoji || '🎲'} ${tpl.name}`,
+                    norm: normStr(tpl.name)
+                }))
+                .sort((a, b) => a.name.localeCompare(b.name, 'es', { sensitivity: 'base' }));
+        }
+
+        function filterLibrary() {
+            const q = normStr(document.getElementById('librarySearch').value.trim());
+            const dropdown = document.getElementById('libraryDropdown');
+
+            // Si el campo está vacío y el hidden tiene valor, el usuario está editando → limpiar selección
+            if (document.getElementById('templateSelect').value !== '') {
+                document.getElementById('templateSelect').value = '';
+                document.getElementById('libraryClearBtn').style.display = 'none';
+            }
+
+            const matches = q === ''
+                ? _libraryIndex
+                : _libraryIndex.filter(t => t.norm.includes(q));
+
+            renderDropdown(matches, q);
+            dropdown.style.display = 'block';
+        }
+
+        function renderDropdown(items, q) {
+            const dropdown = document.getElementById('libraryDropdown');
+            dropdown.innerHTML = '';
+
+            if (items.length === 0) {
+                dropdown.innerHTML = `<li class="library-dropdown-empty">Sin resultados para "${q}"</li>`;
+                return;
+            }
+
+            items.forEach(t => {
+                const li = document.createElement('li');
+                // Resaltar la parte que coincide con la búsqueda
+                let nameHtml = escapeHtml(t.name);
+                if (q) {
+                    const idx = t.norm.indexOf(q);
+                    if (idx !== -1) {
+                        nameHtml =
+                            escapeHtml(t.name.slice(0, idx)) +
+                            `<span class="lib-match">${escapeHtml(t.name.slice(idx, idx + q.length))}</span>` +
+                            escapeHtml(t.name.slice(idx + q.length));
+                    }
+                }
+                li.innerHTML = `<span>${t.emoji}</span><span>${nameHtml}</span>`;
+                li.addEventListener('mousedown', (e) => e.preventDefault()); // evita blur antes de click
+                li.addEventListener('click', () => selectLibraryItem(t));
+                dropdown.appendChild(li);
+            });
+        }
+
+        function escapeHtml(str) {
+            return str.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+        }
+
+        function selectLibraryItem(t) {
+            document.getElementById('templateSelect').value = t.index;
+            document.getElementById('librarySearch').value = t.label;
+            document.getElementById('libraryClearBtn').style.display = 'flex';
+            document.getElementById('libraryDropdown').style.display = 'none';
+            // Rellenar nombre del juego y disparar lógica existente
+            document.getElementById('gameName').value = t.name;
+            document.getElementById('gameNameError').textContent = '';
+            updateRemoveButtons();
+        }
+
+        function openLibraryDropdown() {
+            cancelCloseLibrary();
+            const q = normStr(document.getElementById('librarySearch').value.trim());
+            const matches = q === ''
+                ? _libraryIndex
+                : _libraryIndex.filter(t => t.norm.includes(q));
+            renderDropdown(matches, q);
+            document.getElementById('libraryDropdown').style.display = 'block';
+        }
+
+        function scheduleCloseLibrary() {
+            _libraryCloseTimer = setTimeout(() => {
+                document.getElementById('libraryDropdown').style.display = 'none';
+            }, 150);
+        }
+
+        function cancelCloseLibrary() {
+            if (_libraryCloseTimer) clearTimeout(_libraryCloseTimer);
+        }
+
+        function clearLibrarySelection() {
+            document.getElementById('templateSelect').value = '';
+            document.getElementById('librarySearch').value = '';
+            document.getElementById('libraryClearBtn').style.display = 'none';
+            document.getElementById('libraryDropdown').style.display = 'none';
+        }
+
+        // ── EXPORTAR / IMPORTAR HISTORIAL ─────────────────────────
+        function exportHistory() {
+            const history = JSON.parse(localStorage.getItem('bgtime_history') || '[]');
+            if (history.length === 0) {
+                alert('No hay partidas guardadas para exportar.');
+                return;
+            }
+            const timestamp = new Date().toISOString().slice(0, 10);
+            const blob = new Blob([JSON.stringify(history, null, 2)], { type: 'application/json' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `bgtime_historial_${timestamp}.json`;
+            a.click();
+            URL.revokeObjectURL(url);
+        }
+
+        function triggerImport() {
+            document.getElementById('importFileInput').value = '';
+            document.getElementById('importFileInput').click();
+        }
+
+        function importHistory(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                try {
+                    const imported = JSON.parse(e.target.result);
+                    if (!Array.isArray(imported)) throw new Error();
+
+                    const existing = JSON.parse(localStorage.getItem('bgtime_history') || '[]');
+                    const existingIds = new Set(existing.map(e => e.id));
+
+                    // Fusionar: añadir solo entradas que no existan ya (por id)
+                    const merged = [...existing];
+                    let added = 0;
+                    imported.forEach(entry => {
+                        if (!existingIds.has(entry.id)) {
+                            merged.push(entry);
+                            added++;
+                        }
+                    });
+
+                    // Reordenar por id descendente (más reciente primero) y limitar a 50
+                    merged.sort((a, b) => b.id - a.id);
+                    localStorage.setItem('bgtime_history', JSON.stringify(merged.slice(0, 50)));
+
+                    showHistory();
+                    alert(`Importación completada: ${added} partida${added !== 1 ? 's' : ''} añadida${added !== 1 ? 's' : ''}.`);
+                } catch {
+                    alert('El archivo no es válido. Asegúrate de importar un JSON exportado desde esta app.');
+                }
+            };
+            reader.readAsText(file);
+        }
     </script>
 </body>
 </html>
