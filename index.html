@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>BGTime: Temporizador y calculadora de puntos para juegos de mesa</title>
+    <title>Tracker de Juegos de Mesa</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
@@ -638,19 +638,109 @@
         }
 
         .scoring-item {
-            background: var(--table-row-alt);
-            padding: 15px;
-            border-radius: 12px;
-            margin-bottom: 12px;
-            border-left: 4px solid var(--primary-color);
-            box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+            background: var(--input-bg);
+            padding: 12px 14px;
+            border-radius: 14px;
+            margin-bottom: 10px;
+            border: 1.5px solid var(--border-color);
+            box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .scoring-item input[type="text"] {
+            width: 100% !important;
+            margin: 0;
+        }
+
+        .scoring-item-footer {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
         }
 
         .scoring-item-header {
             display: flex;
             justify-content: space-between;
             align-items: center;
-            margin-bottom: 10px;
+            margin-bottom: 0;
+        }
+
+        /* Toggle "Resta" pill */
+        .resta-toggle {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            cursor: pointer;
+            user-select: none;
+        }
+
+        .resta-toggle input[type="checkbox"] {
+            display: none;
+        }
+
+        .resta-toggle-pill {
+            width: 38px;
+            height: 22px;
+            border-radius: 11px;
+            background: var(--border-color);
+            position: relative;
+            transition: background 0.2s;
+            flex-shrink: 0;
+        }
+
+        .resta-toggle-pill::after {
+            content: '';
+            position: absolute;
+            width: 16px;
+            height: 16px;
+            border-radius: 50%;
+            background: white;
+            top: 3px;
+            left: 3px;
+            transition: left 0.2s;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.2);
+        }
+
+        .resta-toggle input[type="checkbox"]:checked + .resta-toggle-pill {
+            background: #e74c3c;
+        }
+
+        .resta-toggle input[type="checkbox"]:checked + .resta-toggle-pill::after {
+            left: 19px;
+        }
+
+        .resta-toggle-label {
+            font-size: 14px;
+            font-weight: 600;
+            color: var(--text-secondary);
+            transition: color 0.2s;
+        }
+
+        .resta-toggle:has(input:checked) .resta-toggle-label {
+            color: #e74c3c;
+        }
+
+        .item-delete-btn {
+            width: 34px;
+            height: 34px;
+            min-height: unset;
+            padding: 0;
+            margin: 0;
+            border-radius: 8px;
+            background: rgba(231,76,60,0.1) !important;
+            color: #e74c3c;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: none !important;
+            border: 1px solid rgba(231,76,60,0.2) !important;
+            flex-shrink: 0;
+        }
+
+        .item-delete-btn:active {
+            background: rgba(231,76,60,0.2) !important;
         }
 
         .checkbox-label {
@@ -2040,13 +2130,14 @@
             <div id="itemsConfig" class="scoring-detail-panel" style="display:none;">
                 <div id="itemsContainer">
                     <div class="scoring-item">
-                        <div class="scoring-item-header">
-                            <input type="text" placeholder="Nombre del ítem (ej: Ciudades)" class="item-name" style="width: 60%;">
-                            <div class="checkbox-label">
+                        <input type="text" placeholder="Nombre del ítem (ej: Ciudades)" class="item-name">
+                        <div class="scoring-item-footer">
+                            <label class="resta-toggle">
                                 <input type="checkbox" class="item-negative">
-                                <label>Resta</label>
-                            </div>
-                            <button onclick="removeItem(this)" style="background: #ff4757; padding: 5px 10px;"><svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button>
+                                <span class="resta-toggle-pill"></span>
+                                <span class="resta-toggle-label">Resta puntos</span>
+                            </label>
+                            <button class="item-delete-btn" onclick="removeItem(this)" title="Eliminar ítem"><svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button>
                         </div>
                     </div>
                 </div>
@@ -2070,13 +2161,14 @@
                 <input type="hidden" id="numRoundsWithItems" value="3">
                 <div id="roundItemsContainer">
                     <div class="scoring-item">
-                        <div class="scoring-item-header">
-                            <input type="text" placeholder="Nombre del ítem (ej: Territorios)" class="round-item-name" style="width: 60%;">
-                            <div class="checkbox-label">
+                        <input type="text" placeholder="Nombre del ítem (ej: Territorios)" class="round-item-name">
+                        <div class="scoring-item-footer">
+                            <label class="resta-toggle">
                                 <input type="checkbox" class="round-item-negative">
-                                <label>Resta</label>
-                            </div>
-                            <button onclick="removeRoundItem(this)" style="background: #ff4757; padding: 5px 10px;"><svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button>
+                                <span class="resta-toggle-pill"></span>
+                                <span class="resta-toggle-label">Resta puntos</span>
+                            </label>
+                            <button class="item-delete-btn" onclick="removeRoundItem(this)" title="Eliminar ítem"><svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button>
                         </div>
                     </div>
                 </div>
@@ -3068,13 +3160,14 @@
             const div = document.createElement('div');
             div.className = 'scoring-item';
             div.innerHTML = `
-                <div class="scoring-item-header">
-                    <input type="text" placeholder="Nombre del ítem" class="round-item-name" style="width: 60%;">
-                    <div class="checkbox-label">
+                <input type="text" placeholder="Nombre del ítem" class="round-item-name">
+                <div class="scoring-item-footer">
+                    <label class="resta-toggle">
                         <input type="checkbox" class="round-item-negative">
-                        <label>Resta</label>
-                    </div>
-                    <button onclick="removeRoundItem(this)" style="background: #ff4757; padding: 5px 10px;"><svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button>
+                        <span class="resta-toggle-pill"></span>
+                        <span class="resta-toggle-label">Resta puntos</span>
+                    </label>
+                    <button class="item-delete-btn" onclick="removeRoundItem(this)" title="Eliminar ítem"><svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button>
                 </div>
             `;
             container.appendChild(div);
@@ -3089,13 +3182,14 @@
             const div = document.createElement('div');
             div.className = 'scoring-item';
             div.innerHTML = `
-                <div class="scoring-item-header">
-                    <input type="text" placeholder="Nombre del ítem" class="item-name" style="width: 60%;">
-                    <div class="checkbox-label">
+                <input type="text" placeholder="Nombre del ítem" class="item-name">
+                <div class="scoring-item-footer">
+                    <label class="resta-toggle">
                         <input type="checkbox" class="item-negative">
-                        <label>Resta</label>
-                    </div>
-                    <button onclick="removeItem(this)" style="background: #ff4757; padding: 5px 10px;"><svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button>
+                        <span class="resta-toggle-pill"></span>
+                        <span class="resta-toggle-label">Resta puntos</span>
+                    </label>
+                    <button class="item-delete-btn" onclick="removeItem(this)" title="Eliminar ítem"><svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button>
                 </div>
             `;
             container.appendChild(div);
@@ -3978,13 +4072,14 @@
             `;
             document.getElementById('itemsContainer').innerHTML = `
                 <div class="scoring-item">
-                    <div class="scoring-item-header">
-                        <input type="text" placeholder="Nombre del ítem (ej: Ciudades)" class="item-name" style="width: 60%;">
-                        <div class="checkbox-label">
+                    <input type="text" placeholder="Nombre del ítem (ej: Ciudades)" class="item-name">
+                    <div class="scoring-item-footer">
+                        <label class="resta-toggle">
                             <input type="checkbox" class="item-negative">
-                            <label>Resta</label>
-                        </div>
-                        <button onclick="removeItem(this)" style="background: #ff4757; padding: 5px 10px;"><svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button>
+                            <span class="resta-toggle-pill"></span>
+                            <span class="resta-toggle-label">Resta puntos</span>
+                        </label>
+                        <button class="item-delete-btn" onclick="removeItem(this)" title="Eliminar ítem"><svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button>
                     </div>
                 </div>
             `;
