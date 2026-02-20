@@ -1964,6 +1964,7 @@
             max-height: 240px;
             overflow-y: auto;
             -webkit-overflow-scrolling: touch;
+            overscroll-behavior: contain;
             z-index: 9999;
             list-style: none;
             padding: 6px 0;
@@ -5137,7 +5138,24 @@
                 : _libraryIndex.filter(t => t.norm.includes(q));
             renderDropdown(matches, q);
             positionLibraryDropdown();
-            document.getElementById('libraryDropdown').style.display = 'block';
+            const dropdown = document.getElementById('libraryDropdown');
+            dropdown.style.display = 'block';
+
+            // Al hacer scroll en el dropdown, cerrar el teclado sin cerrar el dropdown
+            if (!dropdown._scrollListenerAdded) {
+                dropdown._scrollListenerAdded = true;
+                let _touchStartY = 0;
+                dropdown.addEventListener('touchstart', (e) => {
+                    _touchStartY = e.touches[0].clientY;
+                }, { passive: true });
+                dropdown.addEventListener('touchmove', (e) => {
+                    const delta = Math.abs(e.touches[0].clientY - _touchStartY);
+                    if (delta > 8) {
+                        const input = document.getElementById('librarySearch');
+                        if (input && document.activeElement === input) input.blur();
+                    }
+                }, { passive: true });
+            }
         }
 
         function scheduleCloseLibrary() {
