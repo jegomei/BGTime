@@ -31,6 +31,10 @@
  */
 
 const GAME_TEMPLATES = [
+
+
+    /* JUEGOS POR TARGET */
+    
     {
         name: "Océanos de papel",
         emoji: "🐙",
@@ -38,45 +42,76 @@ const GAME_TEMPLATES = [
         scoringType: "target_score",
         targetScore: 40
     },
+
+    /*JUEGOS CON ÍTEMS */ 
+
     {
-        name: "Ticket to Ride",
+        name: "Viajeros al tren",
         emoji: "🚂",
         maxPlayers: 5,
         scoringType: "items",
         items: [
             { name: "Rutas", negative: false },
             { name: "Objetivos completados", negative: false },
-            { name: "Ruta más larga", negative: false },
-            { name: "Objetivos fallidos", negative: true }
+            { name: "10p x Ruta más larga", negative: false },
+            { name: "Objetivos fallidos", negative: true },
+            { name: "4p x Estaciones sin usar", negative: false },
         ]
     },
+
     {
-        name: "Carcassonne",
-        emoji: "🏰",
-        maxPlayers: 5,
-        scoringType: "rounds_with_items",
-        numRounds: 1,
-        roundItems: [
-            { name: "Ciudades", negative: false },
-            { name: "Caminos", negative: false },
-            { name: "Monasterios", negative: false },
-            { name: "Campos", negative: false }
+        name: "Dioses!",
+        emoji: "⚡️",
+        maxPlayers: 6,
+        scoringType: "items",
+        items: [
+            { name: "Fila superior", negative: false },
+            { name: "Fila intermedia", negative: false },
+            { name: "Fila inferior", negative: false },
+            { name: "Objetivos", negative: false },
         ]
     },
+
     {
-        name: "Dominion",
-        emoji: "👑",
+        name: "Harmonies",
+        emoji: "🦁",
         maxPlayers: 4,
         scoringType: "items",
         items: [
-            { name: "Provincias", negative: false },
-            { name: "Ducados", negative: false },
-            { name: "Feudos", negative: false },
-            { name: "Jardines", negative: false },
-            { name: "Maldiciones", negative: true }
+            { name: "Árboles", negative: false },
+            { name: "Montañas", negative: false },
+            { name: "Campos", negative: false },
+            { name: "Agua", negative: false },
+            { name: "Edificios", negative: false },
+            { name: "Cartas de animal", negative: false },
+            { name: "Cartas de animal", negative: false },
+            { name: "Cartas de animal", negative: false },
+            { name: "Cartas de animal", negative: false },
+            { name: "Cartas de animal", negative: false },
         ]
     },
+
     {
+            name: "Agrícola",
+            emoji: "🌾",
+            maxPlayers: 5,
+            scoringType: "items",
+            items: [
+                { name: "Campos", negative: false },
+                { name: "Pastos", negative: false },
+                { name: "Cereales", negative: false },
+                { name: "Verduras", negative: false },
+                { name: "Ovejas", negative: false },
+                { name: "Jabalíes", negative: false },
+                { name: "Vacas", negative: false },
+                { name: "Establos vacíos", negative: true },
+                { name: "Habitaciones", negative: false },
+                { name: "Puntos de cartas", negative: false },
+                { name: "Mendicidad", negative: true }
+            ]
+    },
+
+   /*{
         name: "7 Wonders",
         emoji: "🏛️",
         maxPlayers: 7,
@@ -90,32 +125,14 @@ const GAME_TEMPLATES = [
             { name: "Gremios", negative: false },
             { name: "Ciencia", negative: false }
         ]
-    },
-    {
-        name: "Pandemia",
-        emoji: "🦠",
-        maxPlayers: 4,
-        scoringType: "rounds",
-        numRounds: 5,
-        roundScoringMode: "round_by_round"
-    },
-    {
-        name: "Agrícola",
-        emoji: "🌾",
-        maxPlayers: 5,
-        scoringType: "items",
-        items: [
-            { name: "Campos", negative: false },
-            { name: "Pastos", negative: false },
-            { name: "Cereales", negative: false },
-            { name: "Verduras", negative: false },
-            { name: "Ovejas", negative: false },
-            { name: "Jabalíes", negative: false },
-            { name: "Vacas", negative: false },
-            { name: "Establos vacíos", negative: true },
-            { name: "Habitaciones", negative: false },
-            { name: "Puntos de cartas", negative: false },
-            { name: "Mendicidad", negative: true }
-        ]
-    }
+    }, */
+
+    /*JUEGOS CON RONDAS CON ÍTEMS */ 
+
+    /*JUEGOS CON RONDAS */ 
+
+     
+    
+    
+   
 ];
