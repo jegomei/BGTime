@@ -72,6 +72,24 @@ const GAME_TEMPLATES = [
         ]
     },
 
+
+     {
+        name: "Fromage",
+        emoji: "🧀",
+        maxPlayers: 4,
+        scoringType: "items",
+        items: [
+            { name: "Bistro", negative: false },
+            { name: "Festival", negative: false },
+            { name: "Quesería", negative: false },
+            { name: "Ciudades", negative: false },
+            { name: "Estructuras", negative: false },
+            { name: "Fruta", negative: false },
+            { name: "Pedidos", negative: false },
+            { name: "Recursos sin usar", negative: false },
+        ]
+    },
+
     {
         name: "Harmonies",
         emoji: "🦁",
