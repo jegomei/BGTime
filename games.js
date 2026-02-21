@@ -65,13 +65,25 @@ const GAME_TEMPLATES = [
         maxPlayers: 6,
         scoringType: "items",
         items: [
-            { name: "Fila superior", negative: false },
-            { name: "Fila intermedia", negative: false },
-            { name: "Fila inferior", negative: false },
-            { name: "Objetivos", negative: false },
+            { name: "Cuadrícula", negative: false },
+            { name: "Objetivo común", negative: false },
+            { name: "Leyes", negative: false },
+            { name: "Patrones", negative: false },
         ]
     },
-
+     
+    {
+        name: "Sagrada",
+        emoji: "🌈",
+        maxPlayers: 6,
+        scoringType: "items",
+        items: [
+            { name: "Obj. Público", negative: false },
+            { name: "Obj. Privado", negative: false },
+            { name: "Donativos sin usar", negative: false },
+            { name: "Huecos", negative: true },
+        ]
+    },
 
      {
         name: "Fromage",
