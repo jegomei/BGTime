@@ -5822,12 +5822,17 @@
         function buildStatsVS(history) {
             const noSvg = `<svg xmlns="http://www.w3.org/2000/svg" width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="m8 3 4 8 5-5 5 15H2L8 3z"/></svg>`;
 
-            // Recoger todos los jugadores únicos del historial
-            const playerSet = new Set();
+            // Recoger todos los jugadores únicos del historial (normalizando tildes)
+            const playerMap = {};
             history.forEach(e => {
-                if (e.results) e.results.forEach(r => playerSet.add(r.player));
+                if (e.results) e.results.forEach(r => {
+                    const key = normStr(r.player.trim());
+                    if (!playerMap[key]) playerMap[key] = r.player;
+                    else if (r.player.normalize('NFD').length > playerMap[key].normalize('NFD').length)
+                        playerMap[key] = r.player;
+                });
             });
-            const allPlayers = [...playerSet].sort();
+            const allPlayers = Object.values(playerMap).sort();
 
             if (allPlayers.length < 2) {
                 return `<div class="stats-placeholder">${noSvg}<p>Necesitas al menos 2 jugadores distintos en el historial para usar VS.</p></div>`;
@@ -5864,8 +5869,8 @@
             // Partidas en las que participaron AMBOS
             const shared = history.filter(e => {
                 if (!e.results) return false;
-                const names = e.results.map(r => r.player);
-                return names.includes(pA) && names.includes(pB);
+                const names = e.results.map(r => normStr(r.player.trim()));
+                return names.includes(normStr(pA)) && names.includes(normStr(pB));
             });
 
             if (shared.length === 0) {
@@ -5889,8 +5894,8 @@
                 g.games++;
 
                 const results = entry.results; // ya ordenado desc por score
-                const posA = results.findIndex(r => r.player === pA);
-                const posB = results.findIndex(r => r.player === pB);
+                const posA = results.findIndex(r => normStr(r.player.trim()) === normStr(pA));
+                const posB = results.findIndex(r => normStr(r.player.trim()) === normStr(pB));
 
                 // Quien quedó en mejor posición (menor índice = mejor)
                 if (posA < posB)      { g.better_A++; globalBetter_A++; }
@@ -5984,8 +5989,9 @@
                 players.forEach((name, i) => {
                     const t = times[i] || 0;
                     const desvPct = ((t - mean) / mean) * 100;
-                    const key = name.trim().toLowerCase();
+                    const key = normStr(name.trim());
                     if (!playerDeviations[key]) playerDeviations[key] = { name, deviations: [] };
+                    else if (name.normalize('NFD').length > playerDeviations[key].name.normalize('NFD').length) playerDeviations[key].name = name;
                     playerDeviations[key].deviations.push(desvPct);
                 });
             });
@@ -6034,12 +6040,14 @@
                 if (!entry.results || entry.results.length === 0) return;
                 const winner = entry.results[0].player;
                 entry.results.forEach(r => {
-                    const key = r.player.trim().toLowerCase();
+                    const key = normStr(r.player.trim());
                     if (!playerMap[key]) {
                         playerMap[key] = { name: r.player, games: 0, wins: 0 };
+                    } else if (r.player.normalize('NFD').length > playerMap[key].name.normalize('NFD').length) {
+                        playerMap[key].name = r.player;
                     }
                     playerMap[key].games++;
-                    if (r.player === winner) playerMap[key].wins++;
+                    if (normStr(r.player.trim()) === normStr(winner.trim())) playerMap[key].wins++;
                 });
             });
 
