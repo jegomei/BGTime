@@ -4854,6 +4854,17 @@
             });
         }
 
+        function generarEnlacePartida(entrada) {
+            const datos = {
+                g: entrada.gameName,
+                e: entrada.emoji || '🎲',
+                d: entrada.date,
+                r: (entrada.results || []).map(r => ({ p: r.player, s: r.score }))
+            };
+            const encoded = btoa(unescape(encodeURIComponent(JSON.stringify(datos))));
+            return `https://jegomei.github.io/BGTime/?partida=${encoded}`;
+        }
+
         function shareResults() {
             let results;
             
@@ -4929,8 +4940,14 @@
                 shareText += playerLine + '\n';
             });
             
-            shareText += `\nBGTime — https://jegomei.github.io/BGTime/`;
-            
+            const entradaParaLink = {
+                gameName: gameData.gameName,
+                emoji: tplEmoji,
+                date: new Date().toLocaleDateString('es-ES', { day: '2-digit', month: '2-digit', year: '2-digit' }),
+                results: results
+            };
+            shareText += `\nAñade el resultado a tu historial — ${generarEnlacePartida(entradaParaLink)}`;
+
             if (navigator.clipboard && navigator.clipboard.writeText) {
                 navigator.clipboard.writeText(shareText).then(() => {
                     alert('✅ Resultados copiados al portapapeles!\n\nAhora puedes pegarlos en WhatsApp, Telegram, etc.');
@@ -5319,7 +5336,8 @@
             results.forEach((r, i) => {
                 text += `${i + 1}. ${r.player}: ${r.score} pts${i === 0 ? ' 👑' : ''}\n`;
             });
-            text += `\nBGTime — https://jegomei.github.io/BGTime/`;
+            text += `\nAñade el resultado a tu historial — ${generarEnlacePartida(entry)}`;
+
             if (navigator.clipboard && navigator.clipboard.writeText) {
                 navigator.clipboard.writeText(text).then(() => {
                     alert('✅ Resultados copiados al portapapeles!\n\nAhora puedes pegarlos en WhatsApp, Telegram, etc.');
