@@ -5604,14 +5604,21 @@
             // Poblar la Biblioteca con las plantillas de games.js + plantillas propias
             rebuildLibrary();
 
-            // Restaurar estado tras recarga
-            restoreAppState();
-
-            // Detectar importación desde enlace compartido
+            // Detectar importación desde enlace compartido ANTES de restaurar estado
             checkUrlImport();
+
             if (_pendingImport) {
-                // Si hay partida pendiente de importar, ir directamente al historial
-                showHistory();
+                // Hay partida pendiente: ir directo al historial sin restaurar estado anterior
+                renderHistoryList();
+                // Forzar historyScreen como pantalla activa directamente (sin toggle)
+                document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+                const hs = document.getElementById('historyScreen');
+                hs.classList.add('active');
+                hs.style.transform = 'translateX(0)';
+                document.getElementById('historyBtn').classList.add('btn-on');
+            } else {
+                // Flujo normal: restaurar estado guardado
+                restoreAppState();
             }
         });
 
