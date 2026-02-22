@@ -85,6 +85,43 @@
         }
 
         /* ── Stats Screen ─────────────────────────────── */
+        /* ── Player Name Modal ────────────────────────── */
+        .player-name-option {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 12px 16px;
+            border-radius: 12px;
+            border: 2px solid var(--border-color);
+            background: var(--table-row-alt);
+            cursor: pointer;
+            font-size: 15px;
+            font-weight: 600;
+            color: var(--text-primary);
+            transition: all 0.15s ease;
+        }
+        .player-name-option:active { transform: scale(0.97); }
+        .player-name-option.selected {
+            border-color: var(--primary-color);
+            background: var(--btn-primary-gradient);
+            color: #fff;
+        }
+        .player-name-option .option-check {
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            border: 2px solid currentColor;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+            opacity: 0.4;
+        }
+        .player-name-option.selected .option-check {
+            opacity: 1;
+            background: rgba(255,255,255,0.25);
+        }
+
         /* ── Import Banner ────────────────────────────── */
         .import-banner {
             border-radius: 16px;
@@ -3210,6 +3247,27 @@
         </div>
     </div>
 
+    <div id="playerNameModal" class="confirm-modal-overlay" style="display:none;" onclick="closePlayerNameModal(event)">
+        <div class="confirm-modal-box" style="text-align:left;max-width:340px;">
+            <p class="confirm-modal-title" style="text-align:center;margin-bottom:4px;">Nombre a mostrar</p>
+            <p class="confirm-modal-desc" style="text-align:center;margin-bottom:18px;">Elige cómo aparece este jugador en las estadísticas</p>
+            <div id="playerNameOptions" style="display:flex;flex-direction:column;gap:8px;margin-bottom:20px;"></div>
+            <button class="confirm-modal-cancel" style="width:100%;margin:0;" onclick="closePlayerNameModal()">Cancelar</button>
+        </div>
+    </div>
+
+    <div id="mergePlayerModal" class="confirm-modal-overlay" style="display:none;" onclick="closeMergePlayerModal(event)">
+        <div class="confirm-modal-box" style="text-align:left;max-width:340px;padding-bottom:24px;">
+            <p class="confirm-modal-title" style="text-align:center;margin-bottom:4px;" id="mergeModalTitle">Fusionar jugadores</p>
+            <p class="confirm-modal-desc" style="text-align:center;margin-bottom:18px;" id="mergeModalDesc">Selecciona el primer jugador</p>
+            <div id="mergePlayerOptions" style="display:flex;flex-direction:column;gap:8px;max-height:55vh;overflow-y:auto;margin-bottom:20px;"></div>
+            <div style="display:flex;gap:10px;">
+                <button class="confirm-modal-cancel" style="flex:1;margin:0;" onclick="closeMergePlayerModal()">Cancelar</button>
+                <button id="mergeConfirmBtn" class="confirm-modal-ok" style="flex:1;margin:0;background:var(--btn-primary-gradient);box-shadow:none;display:none;" onclick="confirmMerge()">Fusionar</button>
+            </div>
+        </div>
+    </div>
+
     <script>
         let gameData = {
             gameName: '',
@@ -6093,27 +6151,38 @@
             return `<div class="stats-placeholder">${placeholderSvg}<p><strong>${tabLabels[tab]}</strong><br>Próximamente aquí verás tus estadísticas.<br><span style="font-size:11px;opacity:0.5;">${history.length} partida${history.length !== 1 ? 's' : ''} guardada${history.length !== 1 ? 's' : ''}</span></p></div>`;
         }
 
+        // Devuelve la key resuelta y el nombre a mostrar para cualquier nombre crudo del historial
+        function resolvePlayer(rawName) {
+            const prefs  = JSON.parse(localStorage.getItem('bgtime_playernames') || '{}');
+            const merges = JSON.parse(localStorage.getItem('bgtime_merges') || '{}');
+            const key    = resolveKey(normStr(rawName.trim()), merges);
+            // Nombre preferido si existe, si no el rawName original
+            const display = prefs[key] || rawName.trim();
+            return { key, display };
+        }
+
         function buildStatsVS(history) {
             const noSvg = `<svg xmlns="http://www.w3.org/2000/svg" width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="m8 3 4 8 5-5 5 15H2L8 3z"/></svg>`;
 
-            // Recoger todos los jugadores únicos del historial (normalizando tildes)
-            const playerMap = {};
+            // Recoger todos los jugadores únicos resolviendo fusiones y nombres preferidos
+            const playerMap = {}; // key -> displayName
             history.forEach(e => {
                 if (e.results) e.results.forEach(r => {
-                    const key = normStr(r.player.trim());
-                    if (!playerMap[key]) playerMap[key] = r.player;
-                    else if (r.player.normalize('NFD').length > playerMap[key].normalize('NFD').length)
-                        playerMap[key] = r.player;
+                    const { key, display } = resolvePlayer(r.player);
+                    playerMap[key] = display;
                 });
             });
-            const allPlayers = Object.values(playerMap).sort();
+            // Ordenar por displayName; usar key como value interno
+            const allPlayers = Object.entries(playerMap)
+                .map(([key, display]) => ({ key, display }))
+                .sort((a, b) => a.display.localeCompare(b.display));
 
             if (allPlayers.length < 2) {
                 return `<div class="stats-placeholder">${noSvg}<p>Necesitas al menos 2 jugadores distintos en el historial para usar VS.</p></div>`;
             }
 
-            const options = allPlayers.map(p => `<option value="${p}">${p}</option>`).join('');
-            const p2Options = allPlayers.map((p, i) => `<option value="${p}" ${i === 1 ? 'selected' : ''}>${p}</option>`).join('');
+            const options   = allPlayers.map(p => `<option value="${p.key}">${p.display}</option>`).join('');
+            const p2Options = allPlayers.map((p, i) => `<option value="${p.key}" ${i === 1 ? 'selected' : ''}>${p.display}</option>`).join('');
 
             return `
                 <div class="vs-selector">
@@ -6125,26 +6194,28 @@
         }
 
         function renderVSComparison() {
-            const leftEl = document.getElementById('vsSelectLeft');
+            const leftEl  = document.getElementById('vsSelectLeft');
             const rightEl = document.getElementById('vsSelectRight');
             if (!leftEl || !rightEl) return;
 
-            const pA = leftEl.value;
-            const pB = rightEl.value;
+            const keyA = leftEl.value;
+            const keyB = rightEl.value;
+            const nameA = leftEl.options[leftEl.selectedIndex].text;
+            const nameB = rightEl.options[rightEl.selectedIndex].text;
             const container = document.getElementById('vsResult');
 
-            if (pA === pB) {
+            if (keyA === keyB) {
                 container.innerHTML = `<div class="vs-no-data">Selecciona dos jugadores distintos.</div>`;
                 return;
             }
 
             const history = JSON.parse(localStorage.getItem('bgtime_history') || '[]');
 
-            // Partidas en las que participaron AMBOS
+            // Partidas en las que participaron AMBOS (resolviendo fusiones)
             const shared = history.filter(e => {
                 if (!e.results) return false;
-                const names = e.results.map(r => normStr(r.player.trim()));
-                return names.includes(normStr(pA)) && names.includes(normStr(pB));
+                const keys = e.results.map(r => resolvePlayer(r.player).key);
+                return keys.includes(keyA) && keys.includes(keyB);
             });
 
             if (shared.length === 0) {
@@ -6152,47 +6223,41 @@
                 return;
             }
 
-            // Totales globales: quién quedó mejor en cada partida
             let globalBetter_A = 0, globalBetter_B = 0, globalTie = 0;
             let globalWins_A = 0, globalWins_B = 0;
 
-            // Agrupar por juego
             const gameMap = {};
             shared.forEach(entry => {
-                const key = entry.gameName.trim().toLowerCase();
-                if (!gameMap[key]) gameMap[key] = {
+                const gkey = entry.gameName.trim().toLowerCase();
+                if (!gameMap[gkey]) gameMap[gkey] = {
                     name: entry.gameName, emoji: entry.emoji || '🎲',
                     games: 0, better_A: 0, better_B: 0, wins_A: 0, wins_B: 0
                 };
-                const g = gameMap[key];
+                const g = gameMap[gkey];
                 g.games++;
 
-                const results = entry.results; // ya ordenado desc por score
-                const posA = results.findIndex(r => normStr(r.player.trim()) === normStr(pA));
-                const posB = results.findIndex(r => normStr(r.player.trim()) === normStr(pB));
+                // Resolver resultados con fusiones
+                const results = entry.results.map(r => ({ ...r, _key: resolvePlayer(r.player).key }));
+                const posA = results.findIndex(r => r._key === keyA);
+                const posB = results.findIndex(r => r._key === keyB);
 
-                // Quien quedó en mejor posición (menor índice = mejor)
                 if (posA < posB)      { g.better_A++; globalBetter_A++; }
                 else if (posB < posA) { g.better_B++; globalBetter_B++; }
-                else                  { g.better_A++; g.better_B++; globalTie++; } // empate exacto (rarísimo)
+                else                  { g.better_A++; g.better_B++; globalTie++; }
 
-                // Victorias reales (ganó la partida = posición 0)
                 if (posA === 0) { g.wins_A++; globalWins_A++; }
                 if (posB === 0) { g.wins_B++; globalWins_B++; }
             });
 
-            // Ordenar juegos por número de partidas desc
             const games = Object.values(gameMap).sort((a, b) => b.games - a.games);
-
-            // Cabecera global
             const winnerGlobal = globalBetter_A > globalBetter_B ? 'left'
                                : globalBetter_B > globalBetter_A ? 'right' : 'tie';
 
             const globalHtml = `
                 <div class="vs-header">
-                    <span class="vs-player-name left" style="${winnerGlobal === 'left' ? 'color:var(--primary-color)' : ''}">${pA}</span>
+                    <span class="vs-player-name left" style="${winnerGlobal === 'left' ? 'color:var(--primary-color)' : ''}">${nameA}</span>
                     <span class="vs-header-label">${shared.length} partida${shared.length !== 1 ? 's' : ''}</span>
-                    <span class="vs-player-name right" style="${winnerGlobal === 'right' ? 'color:var(--primary-color)' : ''}">${pB}</span>
+                    <span class="vs-player-name right" style="${winnerGlobal === 'right' ? 'color:var(--primary-color)' : ''}">${nameB}</span>
                 </div>
                 <div class="vs-global-score">
                     <div style="text-align:center">
@@ -6206,7 +6271,6 @@
                     </div>
                 </div>`;
 
-            // Filas por juego
             const gameRows = games.map(g => {
                 const winnerGame = g.better_A > g.better_B ? 'left'
                                  : g.better_B > g.better_A ? 'right' : 'tie';
@@ -6235,7 +6299,6 @@
         function buildStatsTime(history) {
             const noTimerSvg = `<svg xmlns="http://www.w3.org/2000/svg" width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>`;
 
-            // Solo partidas con timer y datos de tiempo válidos
             const timedGames = history.filter(e =>
                 e.usedTimer &&
                 Array.isArray(e.playerTotalTimes) && e.playerTotalTimes.length > 0 &&
@@ -6247,32 +6310,28 @@
                 return `<div class="stats-placeholder">${noTimerSvg}<p>Aún no hay partidas con timer registradas.<br>Activa el temporizador en tu próxima partida.</p></div>`;
             }
 
-            // Para cada partida con timer, calcular la desviación de cada jugador
-            // respecto a la media de esa partida, en porcentaje
-            // desvPct = (tiempoJugador - media) / media * 100
-            const playerDeviations = {}; // key -> { name, deviations: [] }
+            const playerDeviations = {}; // key -> { display, deviations[] }
 
             timedGames.forEach(entry => {
-                const times = entry.playerTotalTimes;
+                const times   = entry.playerTotalTimes;
                 const players = entry.orderedPlayers;
-                const total = times.reduce((s, t) => s + t, 0);
+                const total   = times.reduce((s, t) => s + t, 0);
                 if (total === 0) return;
                 const mean = total / players.length;
                 if (mean === 0) return;
 
                 players.forEach((name, i) => {
-                    const t = times[i] || 0;
+                    const { key, display } = resolvePlayer(name);
+                    const t       = times[i] || 0;
                     const desvPct = ((t - mean) / mean) * 100;
-                    const key = normStr(name.trim());
-                    if (!playerDeviations[key]) playerDeviations[key] = { name, deviations: [] };
-                    else if (name.normalize('NFD').length > playerDeviations[key].name.normalize('NFD').length) playerDeviations[key].name = name;
+                    if (!playerDeviations[key]) playerDeviations[key] = { display, deviations: [] };
+                    else playerDeviations[key].display = display; // actualizar por si cambió la preferencia
                     playerDeviations[key].deviations.push(desvPct);
                 });
             });
 
-            // Calcular media de desviaciones por jugador, ordenar de más lento a más rápido
             const players = Object.values(playerDeviations).map(p => ({
-                name: p.name,
+                name: p.display,
                 avgDev: p.deviations.reduce((s, d) => s + d, 0) / p.deviations.length,
                 games: p.deviations.length
             })).sort((a, b) => b.avgDev - a.avgDev);
@@ -6282,14 +6341,13 @@
             }
 
             const rows = players.map((p, i) => {
-                const val = Math.round(Math.abs(p.avgDev));
+                const val    = Math.round(Math.abs(p.avgDev));
                 const isSlow = p.avgDev > 2;
                 const isFast = p.avgDev < -2;
-                const sign = isSlow ? '+' : (isFast ? '−' : '');
-                const cls = isSlow ? 'slow' : (isFast ? 'fast' : 'neutral');
-                const label = isSlow ? 'más lento' : (isFast ? 'más rápido' : 'en la media');
-                const emoji = isSlow ? '🐢' : (isFast ? '⚡' : '🎯');
-
+                const sign   = isSlow ? '+' : (isFast ? '−' : '');
+                const cls    = isSlow ? 'slow' : (isFast ? 'fast' : 'neutral');
+                const label  = isSlow ? 'más lento' : (isFast ? 'más rápido' : 'en la media');
+                const emoji  = isSlow ? '🐢' : (isFast ? '⚡' : '🎯');
                 return `
                     <div class="stats-time-row">
                         <span class="stats-game-rank">${i + 1}</span>
@@ -6308,24 +6366,27 @@
         }
 
         function buildStatsPlayer(history) {
-            // Agrupar por jugador
+            const prefs  = JSON.parse(localStorage.getItem('bgtime_playernames') || '{}');
+            const merges = JSON.parse(localStorage.getItem('bgtime_merges') || '{}');
+
+            // Agrupar por jugador resolviendo fusiones y recogiendo TODAS las variantes de nombre
             const playerMap = {};
             history.forEach(entry => {
                 if (!entry.results || entry.results.length === 0) return;
                 const winner = entry.results[0].player;
                 entry.results.forEach(r => {
-                    const key = normStr(r.player.trim());
+                    const rawKey = normStr(r.player.trim());
+                    const key    = resolveKey(rawKey, merges);
                     if (!playerMap[key]) {
-                        playerMap[key] = { name: r.player, games: 0, wins: 0 };
-                    } else if (r.player.normalize('NFD').length > playerMap[key].name.normalize('NFD').length) {
-                        playerMap[key].name = r.player;
+                        playerMap[key] = { key, names: new Set(), games: 0, wins: 0 };
                     }
+                    playerMap[key].names.add(r.player.trim());
                     playerMap[key].games++;
-                    if (normStr(r.player.trim()) === normStr(winner.trim())) playerMap[key].wins++;
+                    if (resolveKey(normStr(winner.trim()), merges) === key) playerMap[key].wins++;
                 });
             });
 
-            // Ordenar por partidas jugadas (desc), luego por winrate (desc) como desempate
+            // Ordenar por partidas jugadas (desc), luego por winrate (desc)
             const players = Object.values(playerMap).sort((a, b) => {
                 if (b.games !== a.games) return b.games - a.games;
                 return (b.wins / b.games) - (a.wins / a.games);
@@ -6336,29 +6397,25 @@
                 return `<div class="stats-placeholder">${svg}<p>Aún no hay partidas registradas.</p></div>`;
             }
 
-            // Colores para avatares
-            const avatarColors = [
-                'linear-gradient(135deg,#667eea,#764ba2)',
-                'linear-gradient(135deg,#f093fb,#f5576c)',
-                'linear-gradient(135deg,#4facfe,#00f2fe)',
-                'linear-gradient(135deg,#43e97b,#38f9d7)',
-                'linear-gradient(135deg,#fa709a,#fee140)',
-                'linear-gradient(135deg,#a18cd1,#fbc2eb)',
-                'linear-gradient(135deg,#fda085,#f6d365)',
-                'linear-gradient(135deg,#84fab0,#8fd3f4)',
-            ];
-
             const rows = players.map((p, i) => {
                 const winRate = Math.round((p.wins / p.games) * 100);
-                const initials = p.name.trim().split(/\s+/).map(w => w[0]).join('').slice(0, 2).toUpperCase();
-                const color = avatarColors[i % avatarColors.length];
+                const namesArr = [...p.names].sort();
+                // Nombre a mostrar: el preferido si existe, si no el más largo (con más caracteres)
+                const displayName = prefs[p.key] && namesArr.includes(prefs[p.key])
+                    ? prefs[p.key]
+                    : namesArr.reduce((a, b) => b.length > a.length ? b : a);
+                const hasVariants = namesArr.length > 1;
+                const variantsAttr = hasVariants ? `data-variants="${encodeURIComponent(JSON.stringify(namesArr))}" data-key="${p.key}" data-preferred="${encodeURIComponent(displayName)}"` : '';
+                const editIcon = hasVariants
+                    ? `<svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="opacity:0.4;flex-shrink:0;"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>`
+                    : '';
 
                 return `
-                    <div class="stats-player-row">
+                    <div class="stats-player-row${hasVariants ? ' stats-player-row--clickable' : ''}" ${variantsAttr} ${hasVariants ? `onclick="openPlayerNameModal(this)"` : ''} style="${hasVariants ? 'cursor:pointer;' : ''}">
                         <span class="stats-player-rank">${i + 1}</span>
                         <div class="stats-player-info">
-                            <div class="stats-player-name">${p.name}</div>
-                            <div class="stats-player-sub">${p.wins} victoria${p.wins !== 1 ? 's' : ''} · winrate ${winRate}%</div>
+                            <div class="stats-player-name" style="display:flex;align-items:center;gap:6px;">${displayName}${editIcon}</div>
+                            <div class="stats-player-sub">${p.wins} victoria${p.wins !== 1 ? 's' : ''} · winrate ${winRate}%${hasVariants ? ` · <em style="opacity:0.6">${namesArr.length} variantes</em>` : ''}</div>
                         </div>
                         <div class="stats-game-count">
                             <span class="stats-game-count-num">${p.games}</span>
@@ -6367,7 +6424,189 @@
                     </div>`;
             }).join('');
 
-            return `<div class="stats-player-list">${rows}</div>`;
+            return `<div class="stats-player-list">${rows}<div style="padding:12px 4px 4px;"><button onclick="openMergePlayerModal()" style="width:100%;background:var(--table-row-alt);border:1.5px dashed var(--border-color);color:var(--text-secondary);border-radius:12px;padding:12px;font-size:13px;font-weight:600;display:flex;align-items:center;justify-content:center;gap:8px;min-height:unset;box-shadow:none;margin:0;"><svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="18" cy="18" r="3"/><circle cx="6" cy="6" r="3"/><path d="M13 6h3a2 2 0 0 1 2 2v7"/><line x1="6" y1="9" x2="6" y2="21"/></svg>Fusionar dos jugadores</button></div></div>`;
+        }
+
+        function openPlayerNameModal(row) {
+            const key = row.dataset.key;
+            const variants = JSON.parse(decodeURIComponent(row.dataset.variants));
+            const prefs = JSON.parse(localStorage.getItem('bgtime_playernames') || '{}');
+            const current = prefs[key] && variants.includes(prefs[key]) ? prefs[key] : decodeURIComponent(row.dataset.preferred);
+
+            const container = document.getElementById('playerNameOptions');
+            container.innerHTML = '';
+            variants.forEach(name => {
+                const el = document.createElement('div');
+                el.className = 'player-name-option' + (name === current ? ' selected' : '');
+                el.innerHTML = `
+                    <span>${name}</span>
+                    <span class="option-check">
+                        ${name === current ? '<svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>' : ''}
+                    </span>
+                `;
+                el.addEventListener('click', () => selectPlayerName(key, name, el));
+                container.appendChild(el);
+            });
+
+            document.getElementById('playerNameModal').style.display = 'flex';
+        }
+
+        function selectPlayerName(key, name, el) {
+            // Actualizar UI del modal
+            document.querySelectorAll('#playerNameOptions .player-name-option').forEach(opt => {
+                opt.classList.remove('selected');
+                opt.querySelector('.option-check').innerHTML = '';
+            });
+            el.classList.add('selected');
+            el.querySelector('.option-check').innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>';
+
+            // Guardar preferencia
+            const prefs = JSON.parse(localStorage.getItem('bgtime_playernames') || '{}');
+            prefs[key] = name;
+            localStorage.setItem('bgtime_playernames', JSON.stringify(prefs));
+
+            // Cerrar modal y refrescar estadísticas
+            document.getElementById('playerNameModal').style.display = 'none';
+            const card = document.getElementById('statsCard-player');
+            if (card && card.classList.contains('open')) {
+                const history = JSON.parse(localStorage.getItem('bgtime_history') || '[]');
+                card.innerHTML = buildStatsPlayer(history);
+            }
+        }
+
+        function closePlayerNameModal(e) {
+            if (e && e.target !== document.getElementById('playerNameModal')) return;
+            document.getElementById('playerNameModal').style.display = 'none';
+        }
+
+        // ── FUSIÓN DE JUGADORES ────────────────────────────────────
+        let _mergeStep = 0;      // 1 = eligiendo A, 2 = eligiendo B
+        let _mergeKeyA = null;
+        let _mergeNameA = null;
+        let _mergeKeyB = null;
+        let _mergeNameB = null;
+        let _mergePlayers = [];  // lista completa de jugadores para el modal
+
+        function resolveKey(key, merges) {
+            // Sigue la cadena de fusiones hasta la raíz
+            const visited = new Set();
+            while (merges[key] && !visited.has(key)) {
+                visited.add(key);
+                key = merges[key];
+            }
+            return key;
+        }
+
+        function openMergePlayerModal() {
+            const history = JSON.parse(localStorage.getItem('bgtime_history') || '[]');
+            const prefs   = JSON.parse(localStorage.getItem('bgtime_playernames') || '{}');
+            const merges  = JSON.parse(localStorage.getItem('bgtime_merges') || '{}');
+
+            // Construir lista de jugadores resolviendo fusiones
+            const playerMap = {};
+            history.forEach(entry => {
+                if (!entry.results) return;
+                entry.results.forEach(r => {
+                    const rawKey = normStr(r.player.trim());
+                    const key    = resolveKey(rawKey, merges);
+                    if (!playerMap[key]) playerMap[key] = { key, names: new Set() };
+                    playerMap[key].names.add(r.player.trim());
+                });
+            });
+
+            _mergePlayers = Object.values(playerMap).map(p => {
+                const namesArr = [...p.names].sort();
+                const display  = prefs[p.key] && namesArr.includes(prefs[p.key])
+                    ? prefs[p.key]
+                    : namesArr.reduce((a, b) => b.length > a.length ? b : a);
+                return { key: p.key, display, namesArr };
+            }).sort((a, b) => a.display.localeCompare(b.display));
+
+            _mergeStep  = 1;
+            _mergeKeyA  = null;
+            _mergeKeyB  = null;
+            _mergeNameA = null;
+            _mergeNameB = null;
+
+            document.getElementById('mergeModalTitle').textContent = 'Fusionar jugadores';
+            document.getElementById('mergeModalDesc').textContent  = 'Elige el jugador principal (el que quedará)';
+            document.getElementById('mergeConfirmBtn').style.display = 'none';
+            _renderMergeOptions(null);
+            document.getElementById('mergePlayerModal').style.display = 'flex';
+        }
+
+        function _renderMergeOptions(excludeKey) {
+            const container = document.getElementById('mergePlayerOptions');
+            container.innerHTML = '';
+            _mergePlayers.forEach(p => {
+                if (p.key === excludeKey) return;
+                const el = document.createElement('div');
+                el.className = 'player-name-option';
+                el.innerHTML = `
+                    <div>
+                        <div style="font-size:15px;font-weight:700;">${p.display}</div>
+                        ${p.namesArr.length > 1 ? `<div style="font-size:11px;opacity:0.55;margin-top:2px;">${p.namesArr.join(', ')}</div>` : ''}
+                    </div>
+                    <span class="option-check"></span>
+                `;
+                el.addEventListener('click', () => _onMergeOptionClick(p, el));
+                container.appendChild(el);
+            });
+        }
+
+        function _onMergeOptionClick(p, el) {
+            if (_mergeStep === 1) {
+                _mergeKeyA  = p.key;
+                _mergeNameA = p.display;
+                _mergeStep  = 2;
+
+                document.getElementById('mergeModalTitle').textContent = `"${_mergeNameA}" +…`;
+                document.getElementById('mergeModalDesc').textContent  = 'Ahora elige el jugador a fusionar con él (desaparecerá como entrada separada)';
+                document.getElementById('mergeConfirmBtn').style.display = 'none';
+                _renderMergeOptions(_mergeKeyA);
+
+            } else if (_mergeStep === 2) {
+                _mergeKeyB  = p.key;
+                _mergeNameB = p.display;
+
+                // Marcar selección visualmente
+                document.querySelectorAll('#mergePlayerOptions .player-name-option').forEach(o => {
+                    o.classList.remove('selected');
+                    o.querySelector('.option-check').innerHTML = '';
+                });
+                el.classList.add('selected');
+                el.querySelector('.option-check').innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>';
+
+                document.getElementById('mergeModalTitle').textContent = 'Confirmar fusión';
+                document.getElementById('mergeModalDesc').textContent  = `"${_mergeNameB}" pasará a contarse como "${_mergeNameA}"`;
+                document.getElementById('mergeConfirmBtn').style.display = '';
+            }
+        }
+
+        function confirmMerge() {
+            if (!_mergeKeyA || !_mergeKeyB) return;
+            const merges = JSON.parse(localStorage.getItem('bgtime_merges') || '{}');
+            // keyB apunta a keyA (y cualquier cosa que apuntaba a keyB también)
+            merges[_mergeKeyB] = _mergeKeyA;
+            // Redirigir cualquier fusión anterior que apuntara a keyB
+            Object.keys(merges).forEach(k => {
+                if (merges[k] === _mergeKeyB) merges[k] = _mergeKeyA;
+            });
+            localStorage.setItem('bgtime_merges', JSON.stringify(merges));
+
+            document.getElementById('mergePlayerModal').style.display = 'none';
+
+            // Refrescar estadísticas
+            const card = document.getElementById('statsCard-player');
+            if (card && card.classList.contains('open')) {
+                const history = JSON.parse(localStorage.getItem('bgtime_history') || '[]');
+                card.innerHTML = buildStatsPlayer(history);
+            }
+        }
+
+        function closeMergePlayerModal(e) {
+            if (e && e.target !== document.getElementById('mergePlayerModal')) return;
+            document.getElementById('mergePlayerModal').style.display = 'none';
         }
 
         function buildStatsGame(history) {
@@ -6380,25 +6619,23 @@
                         name: entry.gameName,
                         emoji: entry.emoji || '🎲',
                         count: 0,
-                        wins: {}   // player -> número de victorias
+                        wins: {}   // playerKey -> { display, count }
                     };
                 }
                 gameMap[key].count++;
-                // El ganador es results[0] (ya viene ordenado de mayor a menor)
                 if (entry.results && entry.results.length > 0) {
-                    const winner = entry.results[0].player;
-                    gameMap[key].wins[winner] = (gameMap[key].wins[winner] || 0) + 1;
+                    const { key: pKey, display } = resolvePlayer(entry.results[0].player);
+                    if (!gameMap[key].wins[pKey]) gameMap[key].wins[pKey] = { display, count: 0 };
+                    gameMap[key].wins[pKey].count++;
                 }
             });
 
-            // Ordenar de más partidas a menos
             const games = Object.values(gameMap).sort((a, b) => b.count - a.count);
 
             const rows = games.map((g, i) => {
-                // Jugador con más victorias en este juego
                 let topPlayer = null, topWins = 0;
-                Object.entries(g.wins).forEach(([player, wins]) => {
-                    if (wins > topWins) { topWins = wins; topPlayer = player; }
+                Object.values(g.wins).forEach(w => {
+                    if (w.count > topWins) { topWins = w.count; topPlayer = w.display; }
                 });
                 const winRate = topPlayer ? Math.round((topWins / g.count) * 100) : 0;
 
