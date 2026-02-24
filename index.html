@@ -6890,10 +6890,11 @@
                     return `<span class="history-card-player-pill${i === 0 ? ' winner' : ''}">${i === 0 ? crownSvg : ''}${r.player}${scoreStr}</span>`;
                 }).join('');
 
+                const isLoggedIn = window._fbIsLoggedIn && window._fbIsLoggedIn();
                 const synced = window._syncedIds && window._syncedIds.has(entry.id);
-                const syncIcon = synced
-                    ? `<span style="display:inline-flex;align-items:center;justify-content:center;width:16px;height:16px;border-radius:50%;background:#2ecc71;flex-shrink:0;" title="Sincronizado en la nube">
-                        <svg xmlns="http://www.w3.org/2000/svg" width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+                const syncIcon = (isLoggedIn && !synced)
+                    ? `<span style="display:inline-flex;align-items:center;color:#e74c3c;flex-shrink:0;" title="No sincronizado en la nube">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 10h-1.26A8 8 0 1 0 9 20h9a5 5 0 0 0 0-10z"/><line x1="12" y1="12" x2="12" y2="16"/><line x1="12" y1="18" x2="12.01" y2="18"/></svg>
                        </span>`
                     : '';
 
@@ -8436,9 +8437,26 @@
         }
 
         window._playerSortMode = 'games';
+        window._statsShowAllGames   = false;
+        window._statsShowAllPlayers = false;
 
         window.setPlayerSort = function(mode) {
             window._playerSortMode = mode;
+            window._statsShowAllPlayers = false;
+            const history = JSON.parse(localStorage.getItem('bgtime_history') || '[]');
+            const card = document.getElementById('statsCard-player');
+            if (card) card.innerHTML = buildStatsPlayer(history);
+        };
+
+        window.statsShowMoreGames = function() {
+            window._statsShowAllGames = true;
+            const history = JSON.parse(localStorage.getItem('bgtime_history') || '[]');
+            const card = document.getElementById('statsCard-game');
+            if (card) card.innerHTML = buildStatsGame(history);
+        };
+
+        window.statsShowMorePlayers = function() {
+            window._statsShowAllPlayers = true;
             const history = JSON.parse(localStorage.getItem('bgtime_history') || '[]');
             const card = document.getElementById('statsCard-player');
             if (card) card.innerHTML = buildStatsPlayer(history);
@@ -8504,6 +8522,10 @@
                 return `<div class="stats-placeholder">${svg}<p>Aún no hay partidas registradas.</p></div>`;
             }
 
+            const STATS_LIMIT_P = 5;
+            const showAllPlayers = window._statsShowAllPlayers;
+            const visiblePlayers = showAllPlayers ? players : players.slice(0, STATS_LIMIT_P);
+
             // Selector de orden
             const sortBar = `
                 <div style="display:flex;gap:6px;margin-bottom:12px;flex-wrap:wrap;">
@@ -8535,7 +8557,7 @@
                 });
             }
 
-            const rows = players.map((p, i) => {
+            const rows = visiblePlayers.map((p, i) => {
                 const winRate = Math.round((p.wins / p.games) * 100);
                 const namesArr = [...p.names].sort();
                 const displayName = prefs[p.key] && namesArr.includes(prefs[p.key])
@@ -8586,7 +8608,13 @@
                     </div>`;
             }).join('');
 
-            return `<div class="stats-player-list">${sortBar}${rows}<div style="padding:12px 4px 4px;"><button onclick="openMergePlayerModal()" style="width:100%;background:var(--table-row-alt);border:1.5px dashed var(--border-color);color:var(--text-secondary);border-radius:12px;padding:12px;font-size:13px;font-weight:600;display:flex;align-items:center;justify-content:center;gap:8px;min-height:unset;box-shadow:none;margin:0;"><svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="18" cy="18" r="3"/><circle cx="6" cy="6" r="3"/><path d="M13 6h3a2 2 0 0 1 2 2v7"/><line x1="6" y1="9" x2="6" y2="21"/></svg>Fusionar dos jugadores</button></div></div>`;
+            const svgChevronP = `<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg>`;
+            const remainingP = players.length - STATS_LIMIT_P;
+            const showMoreBtnPlayer = (!showAllPlayers && players.length > STATS_LIMIT_P)
+                ? `<button class="secondary" onclick="statsShowMorePlayers()" style="width:100%;margin-top:10px;display:flex;align-items:center;justify-content:center;gap:8px;">${svgChevronP}Ver ${remainingP} jugador${remainingP !== 1 ? 'es' : ''} más</button>`
+                : '';
+
+            return `<div class="stats-player-list">${sortBar}${rows}${showMoreBtnPlayer}<div style="padding:12px 4px 4px;"><button onclick="openMergePlayerModal()" style="width:100%;background:var(--table-row-alt);border:1.5px dashed var(--border-color);color:var(--text-secondary);border-radius:12px;padding:12px;font-size:13px;font-weight:600;display:flex;align-items:center;justify-content:center;gap:8px;min-height:unset;box-shadow:none;margin:0;"><svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="18" cy="18" r="3"/><circle cx="6" cy="6" r="3"/><path d="M13 6h3a2 2 0 0 1 2 2v7"/><line x1="6" y1="9" x2="6" y2="21"/></svg>Fusionar dos jugadores</button></div></div>`;
         }
 
         function openPlayerNameModal(row) {
@@ -8793,7 +8821,11 @@
 
             const games = Object.values(gameMap).sort((a, b) => b.count - a.count);
 
-            const rows = games.map((g, i) => {
+            const STATS_LIMIT = 5;
+            const showAllGames = window._statsShowAllGames;
+            const visibleGames = showAllGames ? games : games.slice(0, STATS_LIMIT);
+
+            const rows = visibleGames.map((g, i) => {
                 let topPlayer = null, topWins = 0;
                 Object.values(g.wins).forEach(w => {
                     if (w.count > topWins) { topWins = w.count; topPlayer = w.display; }
@@ -8822,7 +8854,13 @@
                     </div>`;
             }).join('');
 
-            return `<div class="stats-game-list">${rows}</div>`;
+            const svgChevron = `<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg>`;
+            const remaining = games.length - STATS_LIMIT;
+            const showMoreBtnGame = (!showAllGames && games.length > STATS_LIMIT)
+                ? `<button class="secondary" onclick="statsShowMoreGames()" style="width:100%;margin-top:10px;display:flex;align-items:center;justify-content:center;gap:8px;">${svgChevron}Ver ${remaining} juego${remaining !== 1 ? 's' : ''} más</button>`
+                : '';
+
+            return `<div class="stats-game-list">${rows}${showMoreBtnGame}</div>`;
         }
 
         // ── Game detail sheet ───────────────────────────────────────────────
