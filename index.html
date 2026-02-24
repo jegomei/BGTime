@@ -5369,6 +5369,49 @@
             updateTimerGradient();
         }
 
+        // ── Wake Lock para mantener pantalla activa ───────────────
+        let wakeLock = null;
+
+        async function requestWakeLock() {
+            // Solo si el navegador soporta Wake Lock API
+            if ('wakeLock' in navigator) {
+                try {
+                    wakeLock = await navigator.wakeLock.request('screen');
+                    console.log('Wake Lock activado');
+                    
+                    // Manejar cuando se libera el wake lock (ej: cambio de tab)
+                    wakeLock.addEventListener('release', () => {
+                        console.log('Wake Lock liberado');
+                    });
+                    
+                } catch (err) {
+                    console.warn('No se pudo activar Wake Lock:', err);
+                }
+            }
+        }
+
+        async function releaseWakeLock() {
+            if (wakeLock !== null) {
+                try {
+                    await wakeLock.release();
+                    wakeLock = null;
+                    console.log('Wake Lock desactivado manualmente');
+                } catch (err) {
+                    console.warn('Error al liberar Wake Lock:', err);
+                }
+            }
+        }
+
+        // Re-adquirir wake lock cuando la página vuelve a ser visible
+        document.addEventListener('visibilitychange', async () => {
+            if (wakeLock !== null && document.visibilityState === 'visible') {
+                // Solo re-adquirir si había un timer activo
+                if (timerData.interval && !timerData.isPaused) {
+                    await requestWakeLock();
+                }
+            }
+        });
+
         // ── Audio: tic-tac con Web Audio API ─────────────────────────
         let _audioCtx = null;
         function _getAudioCtx() {
@@ -5392,6 +5435,9 @@
 
         function startCountdown() {
             if (timerData.interval) clearInterval(timerData.interval);
+
+            // Activar Wake Lock cuando inicia el temporizador
+            requestWakeLock();
 
             timerData.interval = setInterval(() => {
                 if (timerData.isPaused) return;
@@ -5497,10 +5543,14 @@
             if (timerData.isPaused) {
                 overlay.classList.add('visible');
                 if (nextBtn) nextBtn.style.pointerEvents = 'none';
+                // Liberar Wake Lock al pausar
+                releaseWakeLock();
             } else {
                 overlay.classList.remove('visible');
                 if (nextBtn) nextBtn.style.pointerEvents = '';
                 playTurnStart();
+                // Reactivar Wake Lock al reanudar
+                requestWakeLock();
             }
         }
 
@@ -5515,6 +5565,9 @@
                 clearInterval(timerData.interval);
                 timerData.interval = null;
             }
+
+            // Liberar Wake Lock al finalizar el temporizador
+            releaseWakeLock();
 
             // Limpiar estado visual del overlay de pausa al salir del timer
             timerData.isPaused = false;
@@ -5592,6 +5645,8 @@
                 clearInterval(timerData.interval);
                 timerData.interval = null;
             }
+            // Liberar Wake Lock al ir a scoring
+            releaseWakeLock();
             showScreen('scoringSetupScreen');
             document.getElementById('gameDisplayScoring').textContent = gameData.gameName;
         }
@@ -6652,6 +6707,8 @@
             if (timerData.interval) {
                 clearInterval(timerData.interval);
             }
+            // Liberar Wake Lock al resetear el juego
+            releaseWakeLock();
             localStorage.removeItem('bgtime_state');
             
             gameData = {
