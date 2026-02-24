@@ -3,12 +3,12 @@
 const CACHE_VERSION = 'bgtime-v1';
 
 const STATIC_ASSETS = [
-  '/BGTimeDEV/',
-  '/BGTimeDEV/index.html',
-  '/BGTimeDEV/manifest.json',
-  '/BGTimeDEV/favicon.svg',
-  '/BGTimeDEV/icons/icon-192.png',
-  '/BGTimeDEV/icons/icon-512.png',
+  '/BGTime/',
+  '/BGTime/index.html',
+  '/BGTime/manifest.json',
+  '/BGTime/favicon.svg',
+  '/BGTime/icons/icon-192.png',
+  '/BGTime/icons/icon-512.png',
 ];
 
 // ── Instalación: cachea los archivos estáticos ──────────────────────────────
