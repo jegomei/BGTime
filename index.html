@@ -6723,7 +6723,7 @@
                 <div class="import-banner-body">
                     <div class="import-banner-card">
                         <div class="import-banner-game">${entry.emoji} ${entry.gameName}</div>
-                        <div class="import-banner-date">📅 ${entry.date}</div>
+                        <div class="import-banner-date">📅 ${formatRelativeDate(entry.date)}</div>
                         <div class="import-banner-players">${playersHtml}</div>
                     </div>
                     <div class="import-banner-actions">
@@ -6910,7 +6910,7 @@
                         <div class="history-card-emoji">${entry.emoji || '🎲'}</div>
                         <div class="history-card-meta">
                             <div class="history-card-game">${entry.gameName}</div>
-                            <div class="history-card-date">${syncIcon}${entry.date}</div>
+                            <div class="history-card-date">${syncIcon}${formatRelativeDate(entry.date)}</div>
                         </div>
                     </div>
                     <div class="history-card-divider"></div>
@@ -6977,7 +6977,7 @@
 
         function showHistoryDetail(entry) {
             _currentHistoryEntry = entry;
-            document.getElementById('historyDetailTitle').textContent = `${entry.emoji} ${entry.gameName} · ${entry.date}`;
+            document.getElementById('historyDetailTitle').textContent = `${entry.emoji} ${entry.gameName} · ${formatRelativeDate(entry.date)}`;
             const container = document.getElementById('historyDetailTable');
             container.innerHTML = buildHistoryDetailTable(entry);
             document.getElementById('historyDetailModal').style.display = 'flex';
@@ -7303,6 +7303,28 @@
         // Índice ordenado: [{index, name, emoji, label}]
         let _libraryIndex = [];
         let _libraryCloseTimer = null;
+
+        function formatRelativeDate(dateStr) {
+            if (!dateStr) return dateStr;
+            // El formato guardado es DD/MM/AA
+            const parts = dateStr.split('/');
+            if (parts.length !== 3) return dateStr;
+            const day   = parseInt(parts[0], 10);
+            const month = parseInt(parts[1], 10) - 1;
+            const year  = 2000 + parseInt(parts[2], 10);
+            const date  = new Date(year, month, day);
+            if (isNaN(date.getTime())) return dateStr;
+
+            const today = new Date();
+            today.setHours(0, 0, 0, 0);
+            date.setHours(0, 0, 0, 0);
+            const diffDays = Math.round((today - date) / 86400000);
+
+            if (diffDays === 0) return 'Hoy';
+            if (diffDays === 1) return 'Ayer';
+            if (diffDays <= 7) return `Hace ${diffDays} días`;
+            return dateStr;
+        }
 
         function normStr(s) {
             return s.normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase();
@@ -8897,7 +8919,7 @@
                         <div class="history-card-emoji">${entry.emoji || '🎲'}</div>
                         <div class="history-card-meta">
                             <div class="history-card-game">${entry.gameName}</div>
-                            <div class="history-card-date">${entry.date}</div>
+                            <div class="history-card-date">${formatRelativeDate(entry.date)}</div>
                         </div>
                     </div>
                     <div class="history-card-divider"></div>
