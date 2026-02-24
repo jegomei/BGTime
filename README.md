@@ -1,6 +1,7 @@
 # 🎲 BGTime — Temporizador y contador para juegos de mesa
 
 **BGTime** es una app web pensada para jugar mejor en mesa. Sin instalación, sin registro, sin complicaciones — ábrela en el móvil y ya está lista para tu partida.
+También puedes iniciar sesión con tu cuenta de Google, añadir amigos, y las partidas que juguéis juntos se sincronizarán. Un jugador apunta el resultado, y les aparece a todos en su app!
 
 🔗 **[Abrir la app](https://jegomei.github.io/BGTime/)**
 
@@ -50,7 +51,7 @@ BGTime combina dos herramientas en una: un **temporizador por turnos** y un **co
 - Modo oscuro
 - Diseño adaptado a móvil (funciona genial en iPhone y Android)
 - No necesita conexión a internet después de cargar
-- Sin anuncios, sin cuentas, sin nada que estorbe
+- Sin anuncios, sin nada que estorbe
 
 ---
 
@@ -61,11 +62,6 @@ BGTime combina dos herramientas en una: un **temporizador por turnos** y un **co
 3. Escribe el nombre del juego, añade los jugadores y elige el modo de puntuación
 4. ¡A jugar!
 
----
-
-## Tecnología
-
-Una única página web (`index.html`) sin dependencias externas ni frameworks. HTML, CSS y JavaScript puro. Los datos se guardan en el dispositivo con `localStorage`.
 
 ---
 
