@@ -3772,6 +3772,62 @@
             margin-bottom: 2px;
             margin-top: 4px;
         }
+        /* ── Píldoras de plantillas favoritas (pantalla principal) ── */
+        .fav-pills-row {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            justify-content: center;
+            margin-bottom: 14px;
+            animation: titleEntrance 0.5s cubic-bezier(0.34, 1.2, 0.64, 1) 0.45s both;
+        }
+        .fav-pill {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            background: var(--btn-primary-gradient);
+            border: none;
+            border-radius: 20px;
+            padding: 7px 15px;
+            font-size: 13px;
+            font-weight: 700;
+            color: #fff;
+            cursor: pointer;
+            transition: opacity 0.15s, transform 0.12s, box-shadow 0.15s;
+            -webkit-tap-highlight-color: transparent;
+            min-height: unset;
+            margin: 0;
+            box-shadow: 0 2px 10px rgba(102,126,234,0.35);
+            text-shadow: 0 1px 3px rgba(0,0,0,0.2);
+        }
+        .fav-pill:active {
+            opacity: 0.85;
+            transform: scale(0.96);
+        }
+        .fav-pill svg { flex-shrink: 0; }
+        .recent-pill {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            background: var(--table-row-alt);
+            border: 1.5px solid var(--border-color);
+            border-radius: 20px;
+            padding: 7px 15px;
+            font-size: 13px;
+            font-weight: 600;
+            color: var(--text-secondary);
+            cursor: pointer;
+            transition: opacity 0.15s, transform 0.12s;
+            -webkit-tap-highlight-color: transparent;
+            min-height: unset;
+            margin: 0;
+        }
+        .recent-pill:active {
+            opacity: 0.75;
+            transform: scale(0.96);
+        }
+        .recent-pill svg { flex-shrink: 0; }
+
         /* Template form modal */
         .template-form-box {
             max-height: 90vh;
@@ -3945,6 +4001,8 @@
                 </div>
                 
                 <h1 class="welcome-title">¿A qué jugamos hoy?</h1>
+
+                <div id="favoritePillsContainer"></div>
                 
                 <div id="templateSection" style="width: 100%; max-width: 500px; position: relative; animation: titleEntrance 0.6s cubic-bezier(0.34, 1.2, 0.64, 1) 0.3s both;">
                     <!-- Hidden field keeps the numeric index used by the rest of the JS -->
@@ -4971,8 +5029,9 @@
 
         function getActiveMaxPlayers() {
             const select = document.getElementById('templateSelect');
-            if (select.value === '' || typeof GAME_TEMPLATES === 'undefined') return null;
-            return (window._allTemplates || GAME_TEMPLATES)[parseInt(select.value)].maxPlayers || null;
+            const allTpl = window._allTemplates || (typeof GAME_TEMPLATES !== 'undefined' ? GAME_TEMPLATES : []);
+            if (select.value === '' || !allTpl[parseInt(select.value)]) return null;
+            return allTpl[parseInt(select.value)].maxPlayers || null;
         }
 
         function addPlayerInput() {
@@ -5093,9 +5152,10 @@
             // Aplicar plantilla si hay una seleccionada
             const templateSelect = document.getElementById('templateSelect');
             const templateIndex = templateSelect.value;
-            const hasTemplate = templateIndex !== '' && typeof GAME_TEMPLATES !== 'undefined';
+            const allTemplates = window._allTemplates || (typeof GAME_TEMPLATES !== 'undefined' ? GAME_TEMPLATES : []);
+            const hasTemplate = templateIndex !== '' && allTemplates[parseInt(templateIndex)] != null;
             if (hasTemplate) {
-                applyTemplate((window._allTemplates || GAME_TEMPLATES)[parseInt(templateIndex)]);
+                applyTemplate(allTemplates[parseInt(templateIndex)]);
             }
 
             if (destination === 'scoring') {
@@ -7280,6 +7340,7 @@
 
             // Poblar la Biblioteca con las plantillas de games.js + plantillas propias
             rebuildLibrary();
+            renderFavoritePills();
 
             // Detectar importación desde enlace compartido ANTES de restaurar estado
             checkUrlImport();
@@ -7332,15 +7393,20 @@
 
         function buildLibraryIndex() {
             const source = window._allTemplates || (typeof GAME_TEMPLATES !== 'undefined' ? GAME_TEMPLATES : []);
-            _libraryIndex = source
-                .map((tpl, i) => ({
+            const seen = new Map(); // norm → entry, custom gana sobre predefinida
+            source.forEach((tpl, i) => {
+                const entry = {
                     index: i,
                     name: tpl.name,
                     emoji: tpl.emoji || '🎲',
                     label: `${tpl.emoji || '🎲'} ${tpl.name}`,
                     norm: normStr(tpl.name),
                     _custom: tpl._custom || false
-                }))
+                };
+                const existing = seen.get(entry.norm);
+                if (!existing || entry._custom) seen.set(entry.norm, entry);
+            });
+            _libraryIndex = [...seen.values()]
                 .sort((a, b) => a.name.localeCompare(b.name, 'es', { sensitivity: 'base' }));
         }
 
@@ -7417,6 +7483,90 @@
             document.getElementById('gameNameError').textContent = '';
             updateRemoveButtons();
         }
+
+        // ── Píldoras de plantillas favoritas + recientes ─────────────
+        function renderFavoritePills() {
+            const container = document.getElementById('favoritePillsContainer');
+            if (!container) return;
+
+            const templates  = getCustomTemplates ? getCustomTemplates() : [];
+            const favs       = templates.filter(t => t.favorite);
+            const favNorms   = new Set(favs.map(t => normStr(t.name)));
+
+            // SVGs
+            const starSvg  = `<svg xmlns="http://www.w3.org/2000/svg" width="11" height="11" viewBox="0 0 24 24" fill="currentColor" stroke="none"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>`;
+            const clockSvg = `<svg xmlns="http://www.w3.org/2000/svg" width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><polyline points="12 7 12 12 14.5 14.5"/></svg>`;
+
+            // Favoritas
+            const favPills = favs.map(tpl => {
+                const origIndex = templates.indexOf(tpl);
+                return `<button class="fav-pill" onclick="selectFavoriteTemplate(${origIndex})" title="Cargar plantilla: ${tpl.name}">${starSvg} ${tpl.emoji || '🎲'} ${tpl.name}</button>`;
+            }).join('');
+
+            // Recientes: últimas 2 del historial cuyo nombre no coincida con una favorita
+            // y que existan en _libraryIndex (es decir, tienen plantilla)
+            let recentPills = '';
+            try {
+                const history = JSON.parse(localStorage.getItem('bgtime_history') || '[]');
+                const seen    = new Set();
+                const recents = [];
+                for (const entry of history) {
+                    if (!entry.gameName) continue;
+                    const n = normStr(entry.gameName);
+                    if (seen.has(n)) continue;
+                    seen.add(n);
+                    if (favNorms.has(n)) continue; // ya aparece como favorita
+                    // Solo si tiene plantilla en la biblioteca
+                    const libEntry = _libraryIndex.find(t => t.norm === n);
+                    if (!libEntry) continue;
+                    recents.push({ name: entry.gameName, emoji: entry.emoji || libEntry.emoji || '🎲', libEntry });
+                    if (recents.length === 2) break;
+                }
+                recentPills = recents.map(r =>
+                    `<button class="recent-pill" onclick="selectRecentTemplate('${r.name.replace(/'/g, "\\'")}', ${r.libEntry.index})" title="Cargar plantilla: ${r.name}">${clockSvg} ${r.emoji} ${r.name}</button>`
+                ).join('');
+            } catch(e) {}
+
+            if (!favPills && !recentPills) {
+                container.innerHTML = '';
+                return;
+            }
+            container.innerHTML = `<div class="fav-pills-row">${favPills}${recentPills}</div>`;
+        }
+
+        function selectRecentTemplate(gameName, libIndex) {
+            // Igual que selectLibraryItem pero llamando después a goToPlayersScreen
+            const libEntry = _libraryIndex.find(t => t.index === libIndex);
+            if (!libEntry) return;
+            document.getElementById('templateSelect').value = libEntry.index;
+            document.getElementById('librarySearch').value  = libEntry.label;
+            document.getElementById('libraryClearBtn').style.display = 'flex';
+            document.getElementById('libraryDropdown').style.display = 'none';
+            document.getElementById('gameNameError').textContent = '';
+            goToPlayersScreen();
+        }
+
+        function selectFavoriteTemplate(index) {
+            const templates = getCustomTemplates ? getCustomTemplates() : [];
+            const tpl = templates[index];
+            if (!tpl) return;
+
+            // Buscar en _libraryIndex (igual que selectLibraryItem) para obtener el índice global correcto
+            const normName = normStr(tpl.name);
+            const libEntry = _libraryIndex.find(t => t.norm === normName);
+            if (!libEntry) return; // no debería pasar, la plantilla está en la biblioteca
+
+            // Rellenar el campo y el selector oculto exactamente igual que selectLibraryItem
+            document.getElementById('templateSelect').value = libEntry.index;
+            document.getElementById('librarySearch').value = libEntry.label;
+            document.getElementById('libraryClearBtn').style.display = 'flex';
+            document.getElementById('libraryDropdown').style.display = 'none';
+            document.getElementById('gameNameError').textContent = '';
+
+            // Pasar a la pantalla de jugadores usando el mismo flujo que el botón de flecha
+            goToPlayersScreen();
+        }
+        // ─────────────────────────────────────────────────────────────
 
         function openLibraryDropdown() {
             cancelCloseLibrary();
@@ -7862,6 +8012,7 @@
             tpl.favorite = !tpl.favorite;
             saveCustomTemplates(list);
             renderCustomTemplatesList();
+            renderFavoritePills();
         }
 
         function scoringTypeLabel(type) {
@@ -7896,6 +8047,7 @@
             if (window._fbDeleteTemplate) window._fbDeleteTemplate(tpl.id);
             closeDeleteTemplateModal();
             renderCustomTemplatesList();
+            renderFavoritePills();
         }
         // ── Formulario de plantilla ───────────────────────────────────
         let _editingTemplateIndex = null;
@@ -8024,6 +8176,7 @@
 
             document.getElementById('templateFormModal').style.display = 'none';
             renderCustomTemplatesList();
+            renderFavoritePills();
         }
 
         // ── Perfil de jugador (UI) ────────────────────────────────────
