@@ -3723,7 +3723,7 @@
             display: flex;
             flex-wrap: wrap;
             gap: 8px;
-            margin-bottom: 12px;
+            margin-bottom: 0;
         }
         .frecuent-chip {
             background: var(--table-row-alt);
@@ -4032,7 +4032,6 @@
             <span id="gameNameTitle" style="display:none;"></span>
             
             <div class="form-group">
-                <div id="frecuentPlayersChips" class="frecuent-chips-row" style="display:none;"></div>
                 <div id="playersContainer">
                     <div class="player-input-row">
                         <input type="text" placeholder="Nombre del jugador 1" class="player-name">
@@ -4047,6 +4046,7 @@
                 </div>
                 <button id="addPlayerBtn" class="add-player-btn" onclick="addPlayerInput()">+ Añadir Jugador</button>
                 <div id="playersError" class="error"></div>
+                <div id="frecuentPlayersChips" class="frecuent-chips-row" style="display:none;margin-top:16px;"></div>
             </div>
 
             <div class="button-group">
