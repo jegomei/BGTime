@@ -62,7 +62,32 @@ BGTime combina dos herramientas en una: un **temporizador por turnos** y un **co
 3. Escribe el nombre del juego, añade los jugadores y elige el modo de puntuación
 4. ¡A jugar!
 
+---
 
+## ⚠️ Licencia y Derechos de Autor
+
+Este proyecto está protegido bajo la licencia **Creative Commons Atribución-NoComercial-SinDerivadas 4.0 Internacional (CC BY-NC-ND 4.0)**.
+
+### Lo que PUEDES hacer:
+* **Ver y estudiar el código:** Con fines educativos o personales.
+* **Compartir:** Puedes compartir el enlace a este proyecto siempre que des crédito al autor original.
+
+### Lo que NO PUEDES hacer:
+* **Uso Comercial (NC):** No puedes usar este código, diseño o activos para generar ingresos, publicidad o proyectos de pago.
+* **Obras Derivadas (ND):** No puedes modificar, transformar o crear nuevo material basado en este código para distribuirlo como propio.
+* **Redistribución sin permiso:** No puedes resubir este código a otras plataformas bajo tu nombre.
+
+> [!IMPORTANT]
+> El uso de este software implica la aceptación de estos términos. Para cualquier permiso especial o uso comercial, por favor contacta con el autor.
+
+---
+
+## 👤 Autor
+**Álvaro Iregui/ @jegomei**
+* GitHub: [@jegomei](https://github.com/jegomei)
+
+---
+*© 2026 Álvaro Iregui. Todos los derechos reservados bajo licencia CC BY-NC-ND 4.0.*
 ---
 
 *Hecho con ganas de jugar más y contar menos.*
