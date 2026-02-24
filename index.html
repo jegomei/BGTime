@@ -6556,83 +6556,18 @@
             });
         }
 
-        // ── Sistema de enlaces cortos con Firebase ───────────────────
-        
-        // Genera un ID corto de 6 caracteres
-        function generateShortId() {
-            const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZabcdefghjkmnpqrstuvwxyz23456789';
-            let id = '';
-            for (let i = 0; i < 6; i++) {
-                id += chars[Math.floor(Math.random() * chars.length)];
-            }
-            return id;
+        function generarEnlacePartida(entrada) {
+            const datos = {
+                g: entrada.gameName,
+                e: entrada.emoji || '🎲',
+                d: entrada.date,
+                r: (entrada.results || []).map(r => ({ p: r.player, s: r.score }))
+            };
+            const encoded = btoa(unescape(encodeURIComponent(JSON.stringify(datos))));
+            return `https://jegomei.github.io/BGTime/?partida=${encoded}`;
         }
 
-        // Guarda la partida completa en Firebase y retorna enlace corto
-        async function generarEnlacePartida(entrada) {
-            // Si no hay conexión a Firebase, usar el método antiguo como fallback
-            if (!window._fbSaveEntry) {
-                const datos = {
-                    g: entrada.gameName,
-                    e: entrada.emoji || '🎲',
-                    d: entrada.date,
-                    r: (entrada.results || []).map(r => ({ p: r.player, s: r.score }))
-                };
-                const encoded = btoa(unescape(encodeURIComponent(JSON.stringify(datos))));
-                return `https://jegomei.github.io/BGTime/?partida=${encoded}`;
-            }
-
-            try {
-                // Importar setDoc si no está disponible
-                const { setDoc, doc } = await import("https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js");
-                
-                // Generar ID único
-                let shortId = generateShortId();
-                
-                // Preparar datos completos de la partida
-                const sharedEntry = {
-                    id: entrada.id || Date.now(),
-                    gameName: entrada.gameName,
-                    emoji: entrada.emoji || '🎲',
-                    date: entrada.date || new Date().toLocaleDateString('es-ES', { day: '2-digit', month: '2-digit', year: '2-digit' }),
-                    results: entrada.results || [],
-                    players: entrada.players || entrada.results?.map(r => r.player) || [],
-                    scoringType: entrada.scoringType,
-                    roundScores: entrada.roundScores,
-                    itemScores: entrada.itemScores,
-                    roundItemScores: entrada.roundItemScores,
-                    roundItems: entrada.roundItems,
-                    targetScore: entrada.targetScore,
-                    usedTimer: entrada.usedTimer,
-                    gameStartTime: entrada.gameStartTime,
-                    gameEndTime: entrada.gameEndTime,
-                    playerTotalTimes: entrada.playerTotalTimes,
-                    sharedAt: Date.now()
-                };
-
-                // Serializar para Firestore
-                const serialized = serializeForFirestore(sharedEntry);
-                
-                // Guardar en colección pública 'sharedGames'
-                const ref = doc(db, 'sharedGames', shortId);
-                await setDoc(ref, serialized);
-                
-                return `https://jegomei.github.io/BGTime/?shared=${shortId}`;
-            } catch (e) {
-                console.warn('Error creando enlace compartido:', e);
-                // Fallback al método antiguo
-                const datos = {
-                    g: entrada.gameName,
-                    e: entrada.emoji || '🎲',
-                    d: entrada.date,
-                    r: (entrada.results || []).map(r => ({ p: r.player, s: r.score }))
-                };
-                const encoded = btoa(unescape(encodeURIComponent(JSON.stringify(datos))));
-                return `https://jegomei.github.io/BGTime/?partida=${encoded}`;
-            }
-        }
-
-        async function shareResults() {
+        function shareResults() {
             let results;
             
             if ((gameData.scoringType === 'rounds' && gameData.roundScoringMode === 'round_by_round') ||
@@ -6707,29 +6642,7 @@
                 shareText += playerLine + '\n';
             });
             
-            // Crear objeto completo de la entrada para el enlace
-            const entradaParaLink = {
-                id: Date.now(),
-                gameName: gameData.gameName,
-                emoji: tplEmoji,
-                date: new Date().toLocaleDateString('es-ES', { day: '2-digit', month: '2-digit', year: '2-digit' }),
-                results: results,
-                players: gameData.players,
-                scoringType: gameData.scoringType,
-                roundScores: gameData.roundScores,
-                itemScores: gameData.itemScores,
-                roundItemScores: gameData.roundItemScores,
-                roundItems: gameData.roundItems,
-                targetScore: gameData.targetScore,
-                usedTimer: gameData.usedTimer,
-                gameStartTime: gameData.gameStartTime,
-                gameEndTime: gameData.gameEndTime,
-                playerTotalTimes: gameData.playerTotalTimes
-            };
-            
-            // Generar el enlace (puede tardar un momento)
-            const link = await generarEnlacePartida(entradaParaLink);
-            shareText += `\nAñade el resultado a tu historial — ${link}`;
+            shareText += `\nÚnete a BGTime - https://jegomei.github.io/BGTime/`;
 
             if (navigator.clipboard && navigator.clipboard.writeText) {
                 navigator.clipboard.writeText(shareText).then(() => {
@@ -6872,45 +6785,8 @@
             return `${(entry.gameName || '').trim().toLowerCase()}|${(entry.date || '')}|${r}`;
         }
 
-        // Cargar partida compartida desde Firebase
-        async function loadSharedGame(shortId) {
-            try {
-                const { getDoc, doc } = await import("https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js");
-                
-                const ref = doc(db, 'sharedGames', shortId);
-                const snap = await getDoc(ref);
-                
-                if (!snap.exists()) {
-                    alert('❌ Este enlace no es válido o ha expirado.');
-                    return;
-                }
-                
-                const data = snap.data();
-                
-                // Deserializar la partida
-                const entry = deserializeFromFirestore(data);
-                
-                // Asignar a _pendingImport para que se muestre el banner
-                _pendingImport = entry;
-                
-            } catch (e) {
-                console.error('Error cargando partida compartida:', e);
-                alert('❌ Error al cargar la partida. Por favor, intenta de nuevo.');
-            }
-        }
-
-        async function checkUrlImport() {
+        function checkUrlImport() {
             const params = new URLSearchParams(location.search);
-            
-            // Verificar si es un enlace compartido de Firebase
-            const sharedId = params.get('shared');
-            if (sharedId) {
-                history.replaceState(null, '', location.pathname);
-                await loadSharedGame(sharedId);
-                return;
-            }
-            
-            // Método antiguo (base64)
             const encoded = params.get('partida');
             if (!encoded) return;
             // Limpiar la URL para que no se reimporte si recarga
@@ -7231,7 +7107,7 @@
             document.getElementById('historyDetailModal').style.display = 'flex';
         }
 
-        async function shareHistoryEntry() {
+        function shareHistoryEntry() {
             const entry = _currentHistoryEntry;
             if (!entry) return;
             const results = [...entry.results].sort((a, b) => b.score - a.score);
@@ -7239,10 +7115,7 @@
             results.forEach((r, i) => {
                 text += `${i + 1}. ${r.player}: ${r.score} pts${i === 0 ? ' 👑' : ''}\n`;
             });
-            
-            // Generar enlace con await
-            const link = await generarEnlacePartida(entry);
-            text += `\nAñade el resultado a tu historial — ${link}`;
+            text += `\nÚnete a BGTime - https://jegomei.github.io/BGTime/`;
 
             if (navigator.clipboard && navigator.clipboard.writeText) {
                 navigator.clipboard.writeText(text).then(() => {
@@ -7516,7 +7389,7 @@
         }
         // ── Fin PWA Install ──────────────────────────────────────────
 
-        document.addEventListener('DOMContentLoaded', async function() {
+        document.addEventListener('DOMContentLoaded', function() {
             const savedTheme = localStorage.getItem('theme');
 
             if (savedTheme === 'dark') {
@@ -7534,7 +7407,7 @@
             renderFavoritePills();
 
             // Detectar importación desde enlace compartido ANTES de restaurar estado
-            await checkUrlImport();
+            checkUrlImport();
 
             if (_pendingImport) {
                 // Hay partida pendiente: ir directo al historial sin restaurar estado anterior
