@@ -4733,6 +4733,19 @@
         </div>
     </div>
 
+    <div id="confirmDeleteFriendModal" class="confirm-modal-overlay" style="display:none;" onclick="if(event.target===this)closeDeleteFriendModal()">
+        <div class="confirm-modal-box">
+            <div class="confirm-modal-icon"><svg xmlns="http://www.w3.org/2000/svg" width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg></div>
+            <p class="confirm-modal-title">¿Eliminar amigo?</p>
+            <p class="confirm-modal-desc" id="deleteFriendDesc"></p>
+            <p class="confirm-modal-desc" style="margin-top:-10px;font-size:12px;opacity:0.7;">☁️ Se eliminará la conexión para ambos.</p>
+            <div class="confirm-modal-actions">
+                <button class="confirm-modal-cancel" onclick="closeDeleteFriendModal()">Cancelar</button>
+                <button class="confirm-modal-ok" onclick="confirmDeleteFriend()">Sí, eliminar</button>
+            </div>
+        </div>
+    </div>
+
     <div id="playerNameModal" class="confirm-modal-overlay" style="display:none;" onclick="closePlayerNameModal(event)">
         <div class="confirm-modal-box" style="text-align:left;max-width:340px;">
             <p class="confirm-modal-title" style="text-align:center;margin-bottom:4px;">Nombre a mostrar</p>
@@ -8319,7 +8332,7 @@
                         <div class="friend-name">${f.nickname || 'Sin nombre'}</div>
                         <div class="friend-code">${f.code}</div>
                     </div>
-                    <button class="friend-del-btn" onclick="removeFriend('${f.connectionId}')" title="Eliminar">
+                    <button class="friend-del-btn" onclick="askRemoveFriend('${f.connectionId}', '${f.nickname || 'este amigo'}')" title="Eliminar">
                         <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
                     </button>
                 </div>
@@ -8367,9 +8380,23 @@
             }
         }
 
-        async function removeFriend(connectionId) {
-            if (!window._fbRemoveConnection) return;
-            await window._fbRemoveConnection(connectionId);
+        let _pendingRemoveFriendId = null;
+
+        function askRemoveFriend(connectionId, nickname) {
+            _pendingRemoveFriendId = connectionId;
+            document.getElementById('deleteFriendDesc').textContent = `¿Seguro que quieres eliminar a ${nickname} de tus amigos?`;
+            document.getElementById('confirmDeleteFriendModal').style.display = 'flex';
+        }
+
+        function closeDeleteFriendModal() {
+            document.getElementById('confirmDeleteFriendModal').style.display = 'none';
+            _pendingRemoveFriendId = null;
+        }
+
+        async function confirmDeleteFriend() {
+            if (!_pendingRemoveFriendId || !window._fbRemoveConnection) return;
+            closeDeleteFriendModal();
+            await window._fbRemoveConnection(_pendingRemoveFriendId);
             // renderFriendsList se llama automáticamente via onSnapshot
         }
 
