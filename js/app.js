@@ -2442,8 +2442,18 @@
                 */
 
 
-                const sharedBadge = entry.sharedBy
-                    ? `<span class="shared-by-badge" style="margin:0"><svg xmlns="http://www.w3.org/2000/svg" width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/><polyline points="16 6 12 2 8 6"/><line x1="12" y1="2" x2="12" y2="15"/></svg>${entry.sharedBy.nickname || 'un amigo'}</span>`
+                let sharedNickname = null;
+                if (entry.sharedBy) {
+                    sharedNickname = entry.sharedBy.nickname || 'un amigo';
+                } else {
+                    const currentUid = window._fbCurrentUid?.();
+                    if (window._fbIsLoggedIn?.() && entry.creatorUid && currentUid && entry.creatorUid !== currentUid) {
+                        const friendObj = _friends.find(f => f.uid === entry.creatorUid);
+                        sharedNickname = friendObj?.nickname || 'un amigo';
+                    }
+                }
+                const sharedBadge = sharedNickname !== null
+                    ? `<span class="shared-by-badge" style="margin:0"><svg xmlns="http://www.w3.org/2000/svg" width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/><polyline points="16 6 12 2 8 6"/><line x1="12" y1="2" x2="12" y2="15"/></svg>${sharedNickname}</span>`
                     : '';
 
                 const row = document.createElement('div');
@@ -3760,7 +3770,7 @@
             _pendingHistoryTpl = null;
             document.getElementById('templateFormTitle').textContent = 'Editar plantilla';
             document.getElementById('tplSaveBtn').textContent = 'Guardar';
-            document.getElementById('tplEmoji').value = tpl.emoji || '';
+            document.getElementById('tplEmoji').value = tpl.emoji || '🎲';
             document.getElementById('tplName').value = tpl.name || '';
             document.getElementById('tplMaxPlayers').value = tpl.maxPlayers || '';
             document.getElementById('tplFormError').textContent = '';
@@ -4140,6 +4150,7 @@
         async function renderFriendsList() {
             if (!window._fbLoadFriends) return;
             _friends = await window._fbLoadFriends();
+            window._friends = _friends;
 
             // Refrescar chips en pantalla de jugadores si está activa
             if (typeof renderFrecuentChips === 'function') {
@@ -4780,4 +4791,35 @@
                     .then(reg => console.log('BGTime SW registrado:', reg.scope))
                     .catch(err => console.warn('BGTime SW error:', err));
             });
+        }
+
+        // ── Emoji picker ──────────────────────────────────────────────
+        function toggleEmojiPicker(inputId, pickerId) {
+            const popover = document.getElementById(pickerId);
+            const isOpen = popover.style.display !== 'none';
+            // Cerrar todos los pickers abiertos
+            document.querySelectorAll('.emoji-picker-popover').forEach(p => p.style.display = 'none');
+            if (isOpen) return;
+
+            popover.style.display = '';
+            const picker = popover.querySelector('emoji-picker');
+
+            // Reemplazar listener previo para evitar duplicados entre aperturas
+            if (picker._emojiHandler) picker.removeEventListener('emoji-click', picker._emojiHandler);
+            picker._emojiHandler = (e) => {
+                document.getElementById(inputId).value = e.detail.unicode;
+                popover.style.display = 'none';
+            };
+            picker.addEventListener('emoji-click', picker._emojiHandler);
+
+            // Cerrar al hacer clic fuera (setTimeout para no capturar el clic de apertura)
+            setTimeout(() => {
+                const onOutside = (e) => {
+                    if (!popover.contains(e.target) && !e.target.closest('[onclick*="toggleEmojiPicker"]')) {
+                        popover.style.display = 'none';
+                        document.removeEventListener('click', onOutside);
+                    }
+                };
+                document.addEventListener('click', onOutside);
+            }, 0);
         }
