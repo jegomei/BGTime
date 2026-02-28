@@ -234,7 +234,7 @@
 
         function goToActiveGame() {
             if (!_gameInProgress) {
-                showToast('No hay partida en curso');
+                openNoGameSheet();
                 return;
             }
             if (!_activeGameScreenId) return;
@@ -1268,6 +1268,12 @@
                         <span class="resta-toggle-pill"></span>
                         <span class="resta-toggle-label">Resta puntos</span>
                     </label>
+                    <label class="resta-toggle">
+                        <input type="checkbox" class="round-item-fixed" onchange="toggleFixedPts(this)">
+                        <span class="resta-toggle-pill fixed-pts-pill"></span>
+                        <span class="resta-toggle-label">Pts fijos</span>
+                    </label>
+                    <input type="number" class="round-item-fixed-value" min="1" placeholder="0" style="display:none;width:56px;padding:4px 6px;border-radius:8px;text-align:center;">
                     <button class="item-delete-btn" onclick="removeRoundItem(this)" title="Eliminar ítem"><svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button>
                 </div>
             `;
@@ -1290,10 +1296,22 @@
                         <span class="resta-toggle-pill"></span>
                         <span class="resta-toggle-label">Resta puntos</span>
                     </label>
+                    <label class="resta-toggle">
+                        <input type="checkbox" class="item-fixed" onchange="toggleFixedPts(this)">
+                        <span class="resta-toggle-pill fixed-pts-pill"></span>
+                        <span class="resta-toggle-label">Pts fijos</span>
+                    </label>
+                    <input type="number" class="item-fixed-value" min="1" placeholder="0" style="display:none;width:56px;padding:4px 6px;border-radius:8px;text-align:center;">
                     <button class="item-delete-btn" onclick="removeItem(this)" title="Eliminar ítem"><svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button>
                 </div>
             `;
             container.appendChild(div);
+        }
+
+        function toggleFixedPts(cb) {
+            const footer = cb.closest('.scoring-item-footer');
+            const valInput = footer.querySelector('.item-fixed-value, .round-item-fixed-value');
+            if (valInput) valInput.style.display = cb.checked ? '' : 'none';
         }
 
         function removeItem(button) {
@@ -1324,10 +1342,15 @@
                 
             } else if (gameData.scoringType === 'items') {
                 const items = Array.from(document.querySelectorAll('.item-name'))
-                    .map((input, index) => ({
-                        name: input.value.trim(),
-                        negative: document.querySelectorAll('.item-negative')[index].checked
-                    }))
+                    .map((input, index) => {
+                        const fixedCb  = document.querySelectorAll('.item-fixed')[index];
+                        const fixedVal = document.querySelectorAll('.item-fixed-value')[index];
+                        return {
+                            name: input.value.trim(),
+                            negative: document.querySelectorAll('.item-negative')[index].checked,
+                            fixedPoints: fixedCb?.checked ? (parseInt(fixedVal?.value) || 0) : null,
+                        };
+                    })
                     .filter(item => item.name !== '');
                 
                 if (items.length === 0) {
@@ -1342,10 +1365,15 @@
                 gameData.numRounds = parseInt(document.getElementById('numRoundsWithItems').value);
                 
                 const roundItems = Array.from(document.querySelectorAll('.round-item-name'))
-                    .map((input, index) => ({
-                        name: input.value.trim(),
-                        negative: document.querySelectorAll('.round-item-negative')[index].checked
-                    }))
+                    .map((input, index) => {
+                        const fixedCb  = document.querySelectorAll('.round-item-fixed')[index];
+                        const fixedVal = document.querySelectorAll('.round-item-fixed-value')[index];
+                        return {
+                            name: input.value.trim(),
+                            negative: document.querySelectorAll('.round-item-negative')[index].checked,
+                            fixedPoints: fixedCb?.checked ? (parseInt(fixedVal?.value) || 0) : null,
+                        };
+                    })
                     .filter(item => item.name !== '');
                 
                 if (roundItems.length === 0) {
@@ -1386,9 +1414,15 @@
             table += '</tr></thead><tbody>';
             
             gameData.items.forEach((item, itemIndex) => {
-                table += `<tr><td><strong>${item.name}${item.negative ? ' (-)' : ''}</strong></td>`;
+                const fixedLabel = item.fixedPoints != null
+                    ? ` (${item.negative ? '-' : '+'}${item.fixedPoints}pts)`
+                    : (item.negative ? ' (-)' : '');
+                table += `<tr><td><strong>${item.name}${fixedLabel}</strong></td>`;
                 gameData.players.forEach((player, playerIndex) => {
-                    table += `<td><input type="text" inputmode="numeric" pattern="[0-9]*" placeholder="0" id="score-${playerIndex}-${itemIndex}" onchange="updateTotalItems(${playerIndex})"></td>`;
+                    const cell = item.fixedPoints != null
+                        ? `<td><label style="display:flex;align-items:center;justify-content:center;"><input type="checkbox" id="score-${playerIndex}-${itemIndex}" onchange="updateTotalItems(${playerIndex})" style="width:22px;height:22px;cursor:pointer;"></label></td>`
+                        : `<td><input type="text" inputmode="numeric" pattern="[0-9]*" placeholder="0" id="score-${playerIndex}-${itemIndex}" onchange="updateTotalItems(${playerIndex})"></td>`;
+                    table += cell;
                 });
                 table += '</tr>';
             });
@@ -1741,9 +1775,15 @@
             
             gameData.roundItems.forEach((item, itemIndex) => {
                 const isFirst = itemIndex === 0;
-                html += `<tr${isFirst ? ' style="border-top:2px solid var(--primary-color)"' : ''}><td><strong>${item.name}${item.negative ? ' (-)' : ''}</strong></td>`;
+                const fixedLabel = item.fixedPoints != null
+                    ? ` (${item.negative ? '-' : '+'}${item.fixedPoints}pts)`
+                    : (item.negative ? ' (-)' : '');
+                html += `<tr${isFirst ? ' style="border-top:2px solid var(--primary-color)"' : ''}><td><strong>${item.name}${fixedLabel}</strong></td>`;
                 gameData.players.forEach((player, playerIndex) => {
-                    html += `<td><input type="text" inputmode="numeric" pattern="[0-9]*" placeholder="0" id="round-item-${playerIndex}-${itemIndex}" style="width: 100%;"></td>`;
+                    const cell = item.fixedPoints != null
+                        ? `<td><label style="display:flex;align-items:center;justify-content:center;"><input type="checkbox" id="round-item-${playerIndex}-${itemIndex}" onchange="updateRoundTotal(${playerIndex})" style="width:22px;height:22px;cursor:pointer;"></label></td>`
+                        : `<td><input type="text" inputmode="numeric" pattern="[0-9]*" placeholder="0" id="round-item-${playerIndex}-${itemIndex}" style="width: 100%;"></td>`;
+                    html += cell;
                 });
                 html += '</tr>';
             });
@@ -1765,9 +1805,10 @@
             
             gameData.roundItems.forEach((item, itemIndex) => {
                 gameData.players.forEach((player, playerIndex) => {
-                    const input = document.getElementById(`round-item-${playerIndex}-${itemIndex}`);
-                    if (input) {
-                        input.addEventListener('input', () => updateRoundTotal(playerIndex));
+                    const el = document.getElementById(`round-item-${playerIndex}-${itemIndex}`);
+                    if (el) {
+                        const evt = item.fixedPoints != null ? 'change' : 'input';
+                        el.addEventListener(evt, () => updateRoundTotal(playerIndex));
                     }
                 });
             });
@@ -1796,7 +1837,9 @@
             let total = 0;
             gameData.roundItems.forEach((item, itemIndex) => {
                 const el = document.getElementById(`round-item-${playerIndex}-${itemIndex}`);
-                const value = el ? (parseInt(el.value) || 0) : 0;
+                const value = item.fixedPoints != null
+                    ? (el?.checked ? item.fixedPoints : 0)
+                    : (el ? (parseInt(el.value) || 0) : 0);
                 total += item.negative ? -value : value;
             });
             const totalElement = document.getElementById(`round-total-${playerIndex}`);
@@ -1858,7 +1901,10 @@
         function updateTotalItems(playerIndex) {
             let total = 0;
             gameData.items.forEach((item, itemIndex) => {
-                const value = parseInt(document.getElementById(`score-${playerIndex}-${itemIndex}`).value) || 0;
+                const el = document.getElementById(`score-${playerIndex}-${itemIndex}`);
+                const value = item.fixedPoints != null
+                    ? (el?.checked ? item.fixedPoints : 0)
+                    : (parseInt(el?.value) || 0);
                 total += item.negative ? -value : value;
             });
             document.getElementById(`total-${playerIndex}`).textContent = total;
@@ -2044,7 +2090,9 @@
                 gameData.itemScores = gameData.players.map((player, playerIndex) =>
                     gameData.items.map((item, itemIndex) => {
                         const el = document.getElementById(`score-${playerIndex}-${itemIndex}`);
-                        return el ? (parseInt(el.value) || 0) : 0;
+                        return item.fixedPoints != null
+                            ? (el?.checked ? item.fixedPoints : 0)
+                            : (el ? (parseInt(el.value) || 0) : 0);
                     })
                 );
             } else if (gameData.scoringType === 'rounds') {
@@ -2072,7 +2120,10 @@
                 const roundScores = [];
                 gameData.roundItems.forEach((item, itemIndex) => {
                     const el = document.getElementById(`round-item-${playerIndex}-${itemIndex}`);
-                    roundScores.push(el ? (parseInt(el.value) || 0) : 0);
+                    const score = item.fixedPoints != null
+                        ? (el?.checked ? item.fixedPoints : 0)
+                        : (el ? (parseInt(el.value) || 0) : 0);
+                    roundScores.push(score);
                 });
                 gameData.roundItemScores[playerIndex].push(roundScores);
             });
@@ -2288,6 +2339,13 @@
             document.getElementById('gameName').value = '';
             document.getElementById('gameNameError').textContent = '';
             document.getElementById('reorderEachRound').checked = true;
+            document.getElementById('timerNone').checked = true;
+            document.getElementById('timerPerTurn').checked = false;
+            document.getElementById('timerChess').checked = false;
+            document.querySelectorAll('#playersScreen .scoring-type-card').forEach(b => {
+                b.classList.toggle('active', b.getAttribute('onclick')?.includes("'none'"));
+            });
+            updateTimerOptions();
             clearLibrarySelection();
             document.getElementById('playersContainer').innerHTML = `
                 <div class="player-input-row">
@@ -2310,6 +2368,12 @@
                             <span class="resta-toggle-pill"></span>
                             <span class="resta-toggle-label">Resta puntos</span>
                         </label>
+                        <label class="resta-toggle">
+                            <input type="checkbox" class="item-fixed" onchange="toggleFixedPts(this)">
+                            <span class="resta-toggle-pill fixed-pts-pill"></span>
+                            <span class="resta-toggle-label">Pts fijos</span>
+                        </label>
+                        <input type="number" class="item-fixed-value" min="1" placeholder="0" style="display:none;width:56px;padding:4px 6px;border-radius:8px;text-align:center;">
                         <button class="item-delete-btn" onclick="removeItem(this)" title="Eliminar ítem"><svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button>
                     </div>
                 </div>
@@ -2359,44 +2423,6 @@
             // Subir a Firestore si hay sesión
             if (window._fbSaveEntry) window._fbSaveEntry(entry);
 
-            // ── Auto-guardar plantilla si el juego es personalizado ──────
-            // Solo cuando el usuario escribió un nombre de juego libre (templateIndex === '')
-            if (templateIndex === '') {
-                _autoSaveGameAsTemplate(gameData);
-            }
-        }
-
-        // Guarda automáticamente un juego personalizado como plantilla si aún no existe
-        function _autoSaveGameAsTemplate(gd) {
-            if (!gd || !gd.gameName) return;
-            const list = getCustomTemplates();
-            const nameNorm = gd.gameName.trim().toLowerCase();
-
-            // Si ya existe una plantilla con ese nombre (ignorando mayúsculas), no duplicar
-            const alreadyExists = list.some(t => t.name.trim().toLowerCase() === nameNorm);
-            if (alreadyExists) return;
-
-            // Construir la plantilla a partir de los datos de la partida
-            const scoringType = gd.scoringType || 'rounds';
-            const tpl = {
-                id: Date.now(),
-                name: gd.gameName.trim(),
-                emoji: '🎲',
-                scoringType,
-                numRounds: gd.numRounds || 5,
-                targetScore: gd.targetScore || 40,
-                roundScoringMode: gd.roundScoringMode || 'all_at_end',
-                items: scoringType === 'items'
-                    ? (gd.items || []).map(it => ({ name: it.name || it, negative: it.negative || false }))
-                    : [],
-                roundItems: scoringType === 'rounds_with_items'
-                    ? (gd.roundItems || []).map(it => ({ name: it.name || it, negative: it.negative || false }))
-                    : [],
-                _autoSaved: true   // marca interna para distinguirlas si se necesita en el futuro
-            };
-
-            list.push(tpl);
-            saveCustomTemplates(list);
         }
 
         let previousScreenId = 'setupScreen';
@@ -2426,7 +2452,15 @@
             list.className = 'stats-game-list';
             container.appendChild(list);
 
+            // Mapa de plantillas propias para leer nombre/emoji localmente
+            const tplMap = {};
+            (getCustomTemplates() || []).forEach(t => { tplMap[normStr(t.name)] = t; });
+
             visible.forEach(entry => {
+                const tpl = tplMap[normStr(entry.gameName)];
+                const displayEmoji = tpl?.emoji || entry.emoji || '🎲';
+                const displayName  = tpl?.name  || entry.gameName;
+
                 const winner = entry.results?.[0]?.player || '';
                 const winnerBadge = winner
                     ? `<span class="stats-game-winner-badge">${crownSvg}${winner}</span>`
@@ -2459,9 +2493,9 @@
                 const row = document.createElement('div');
                 row.className = 'stats-game-row';
                 row.innerHTML = `
-                    <span class="stats-game-emoji">${entry.emoji || '🎲'}</span>
+                    <span class="stats-game-emoji">${displayEmoji}</span>
                     <div class="stats-game-info">
-                        <div class="stats-game-name">${entry.gameName}</div>
+                        <div class="stats-game-name">${displayName}</div>
                         <div class="stats-game-meta">${winnerBadge}${sharedBadge}</div>
                     </div>
                    
@@ -2501,6 +2535,48 @@
         function closeHistoryDetailModal(e) {
             if (e && e.target !== document.getElementById('historyDetailModal')) return;
             document.getElementById('historyDetailModal').style.display = 'none';
+        }
+
+        function editHistoryEntry() {
+            const entry = _currentHistoryEntry;
+            if (!entry) return;
+            document.getElementById('editEntryInputs').innerHTML = entry.results.map((r, i) =>
+                `<div style="display:flex;align-items:center;gap:12px;margin-bottom:10px;">
+                    <span style="flex:1;font-weight:600;">${r.player}</span>
+                    <input type="number" inputmode="numeric" id="edit-score-${i}" value="${r.score}"
+                           style="width:80px;text-align:center;padding:6px 8px;border-radius:8px;border:1.5px solid var(--border-color);background:var(--input-bg);color:var(--text-primary);">
+                </div>`
+            ).join('');
+            document.getElementById('editEntryModal').style.display = 'flex';
+        }
+
+        function closeEditEntryModal() {
+            document.getElementById('editEntryModal').style.display = 'none';
+        }
+
+        function saveEditedHistoryEntry() {
+            const entry = _currentHistoryEntry;
+            if (!entry) return;
+
+            const newResults = entry.results
+                .map((r, i) => ({ ...r, score: parseInt(document.getElementById(`edit-score-${i}`)?.value) || 0 }))
+                .sort((a, b) => b.score - a.score);
+
+            // Actualizar caché local
+            const history = getHistory();
+            const idx = history.findIndex(e => e.id === entry.id);
+            if (idx !== -1) {
+                history[idx] = { ...history[idx], results: newResults };
+                saveHistory(history);
+                _currentHistoryEntry = history[idx];
+            }
+
+            // Actualizar en Firebase si hay sesión
+            if (window._fbUpdateEntry) window._fbUpdateEntry(entry.id, { results: newResults });
+
+            document.getElementById('editEntryModal').style.display = 'none';
+            showHistoryDetail(_currentHistoryEntry);
+            renderHistoryList();
         }
 
         function deleteHistoryEntry() {
@@ -2559,6 +2635,14 @@
                 <div class="history-modal-detail-table" style="display:none">${buildHistoryDetailTable(entry)}</div>
                 ${addToLibBtn}
             `;
+
+            // Botón editar: solo si es reciente (<5 min) y es el creador
+            const editBtn = document.getElementById('historyDetailEditBtn');
+            const currentUid = window._fbCurrentUid?.();
+            const isCreator = !window._fbIsLoggedIn?.()
+                || (entry.creatorUid && entry.creatorUid === currentUid);
+            const isRecent = (Date.now() - entry.id) < 5 * 60 * 1000;
+            editBtn.style.display = (isCreator && isRecent) ? 'flex' : 'none';
 
             document.getElementById('historyDetailModal').style.display = 'flex';
         }
@@ -2724,7 +2808,18 @@
         }
 
         // ── PERSISTENCIA DE ESTADO ─────────────────────────────────
+        function openNoGameSheet() {
+            document.getElementById('noGameSheet').style.display = 'flex';
+        }
+        function closeNoGameSheet() {
+            document.getElementById('noGameSheet').style.display = 'none';
+        }
+
         function saveAppState() {
+            if (!_gameInProgress) {
+                localStorage.removeItem('bgtime_state');
+                return;
+            }
             const activeScreen = document.querySelector('.screen.active');
             if (!activeScreen) return;
             let screenId = activeScreen.id;
@@ -2958,6 +3053,12 @@
         // ── Biblioteca de juegos: estanterías ────────────────────────
         let _glModalSelectedIndex = null;
         let _glModalHistGameName = null, _glModalHistGameEmoji = null;
+        let _librarySortMode = 'az'; // 'az' | 'recent' | 'popular'
+
+        function setLibrarySortMode(mode) {
+            _librarySortMode = mode;
+            renderLibraryShelves();
+        }
 
         function renderLibraryShelves() {
             const container = document.getElementById('libraryGamesList');
@@ -2966,12 +3067,14 @@
             const templates = getCustomTemplates ? getCustomTemplates() : [];
             const history = getHistory();
 
-            // Calcular frecuencia de cada juego desde el historial
+            // Calcular frecuencia y fecha de última partida desde el historial
             const freqMap = {};
+            const lastPlayedMap = {};
             history.forEach(entry => {
                 const key = normStr(entry.gameName);
-                if (!freqMap[key]) freqMap[key] = { count: 0, name: entry.gameName, emoji: entry.emoji || '🎲' };
+                if (!freqMap[key]) freqMap[key] = { count: 0 };
                 freqMap[key].count++;
+                if (!lastPlayedMap[key] || entry.id > lastPlayedMap[key]) lastPlayedMap[key] = entry.id;
             });
 
             // Recopilar juegos únicos (templates tienen prioridad sobre historial puro)
@@ -2987,28 +3090,32 @@
                     name: tpl.name,
                     emoji: tpl.emoji || '🎲',
                     libIndex: libEntry ? libEntry.index : null,
-                    count: freqMap[key] ? freqMap[key].count : 0
+                    count: freqMap[key]?.count || 0,
+                    lastPlayed: lastPlayedMap[key] || 0
                 });
             });
 
-            // Juegos solo en historial (sin plantilla custom)
-            Object.values(freqMap).forEach(data => {
-                const key = normStr(data.name);
-                if (seen.has(key)) return;
-                seen.add(key);
-                const libEntry = _libraryIndex.find(e => e.norm === key);
-                games.push({
-                    name: data.name,
-                    emoji: data.emoji,
-                    libIndex: libEntry ? libEntry.index : null,
-                    count: data.count
-                });
-            });
+            // Ordenar según el modo activo
+            const sort = _librarySortMode || 'az';
+            if (sort === 'recent') {
+                games.sort((a, b) => (b.lastPlayed - a.lastPlayed) || a.name.localeCompare(b.name, 'es'));
+            } else if (sort === 'popular') {
+                games.sort((a, b) => b.count - a.count || a.name.localeCompare(b.name, 'es'));
+            } else {
+                games.sort((a, b) => a.name.localeCompare(b.name, 'es'));
+            }
 
-            // Ordenar: más frecuentes primero; empate → alfabético
-            games.sort((a, b) => b.count - a.count || a.name.localeCompare(b.name, 'es'));
+            // Barra de ordenación
+            const sortBar = `<div style="display:flex;gap:6px;margin-bottom:12px;">${
+                [['az','A→Z'],['recent','Recientes'],['popular','Más jugados']].map(([m, label]) => {
+                    const active = sort === m;
+                    const activeStyle = 'background:var(--btn-primary-gradient);color:#fff;border-color:transparent;';
+                    const inactiveStyle = 'background:var(--table-row-alt);color:var(--text-secondary);';
+                    return `<button onclick="setLibrarySortMode('${m}')" style="flex:1;min-width:0;padding:7px 10px;border-radius:20px;font-size:12px;font-weight:700;border:1.5px solid var(--border-color);min-height:unset;box-shadow:none;margin:0;transition:all 0.15s;${active ? activeStyle : inactiveStyle}">${label}</button>`;
+                }).join('')
+            }</div>`;
 
-            // Renderizar: botón añadir siempre primero
+            // Renderizar: barra de orden → botón añadir → juegos
             const addBtn = `<button class="library-game-item library-game-item-add" onclick="openAddGameSheet()">
                 <span class="library-game-item-emoji">＋</span>
                 <span class="library-game-item-name">Añadir juego nuevo</span>
@@ -3024,7 +3131,7 @@
                 </button>`;
             }).join('');
 
-            container.innerHTML = addBtn + gameItems;
+            container.innerHTML = sortBar + addBtn + gameItems;
         }
 
         function openGameLibraryModal(libIndex) {
@@ -3148,9 +3255,21 @@
         function submitAddGame() {
             const name = document.getElementById('addGameName').value.trim();
             const emoji = document.getElementById('addGameEmoji').value.trim() || '🎲';
+            const err = document.getElementById('addGameError');
+            err.style.display = 'none';
             if (!name) {
-                const err = document.getElementById('addGameError');
-                err.textContent = 'Escribe el nombre del juego';
+                err.textContent = 'Escribe el nombre del juego.';
+                err.style.display = '';
+                return;
+            }
+            const normName = normStr(name);
+            if (getCustomTemplates().some(t => normStr(t.name) === normName)) {
+                err.textContent = 'Ya hay un juego en la biblioteca con ese nombre.';
+                err.style.display = '';
+                return;
+            }
+            if (getHistory().some(e => normStr(e.gameName) === normName)) {
+                err.textContent = 'Ya hay un juego en el historial con ese nombre.Añádelo a tu biblioteca desde ahí.';
                 err.style.display = '';
                 return;
             }
@@ -3431,7 +3550,6 @@
             const input = document.getElementById('addPlayerNameInput');
             modal.style.display = 'flex';
             input.value = '';
-            setTimeout(() => input.focus(), 100);
             
             // Permitir añadir con Enter
             input.onkeydown = (e) => {
@@ -3789,6 +3907,23 @@
                 document.getElementById('tplFormError').textContent = 'El nombre es obligatorio.';
                 return;
             }
+            const normName = normStr(name);
+            const allTpls = getCustomTemplates();
+            const otherTpls = _editingTemplateIndex !== null ? allTpls.filter((_, i) => i !== _editingTemplateIndex) : allTpls;
+            if (otherTpls.some(t => normStr(t.name) === normName)) {
+                document.getElementById('tplFormError').textContent = 'Ya hay un juego en la biblioteca con ese nombre.';
+                return;
+            }
+            let excludedNorm = null;
+            if (_editingTemplateIndex !== null) {
+                excludedNorm = normStr(allTpls[_editingTemplateIndex].name);
+            } else if (_pendingHistoryTpl !== null) {
+                excludedNorm = normName;
+            }
+            if (getHistory().some(e => { const n = normStr(e.gameName); return n === normName && n !== excludedNorm; })) {
+                document.getElementById('tplFormError').textContent = 'Ya hay un juego en el historial con ese nombre.';
+                return;
+            }
             const maxP = parseInt(document.getElementById('tplMaxPlayers').value);
             const templates = getCustomTemplates();
             const currentTpl = _editingTemplateIndex !== null ? templates[_editingTemplateIndex] : null;
@@ -3838,10 +3973,15 @@
             itemsContainer.innerHTML = '';
             (tpl.items || []).forEach(it => {
                 addItemInput();
-                const names = itemsContainer.querySelectorAll('.item-name');
-                const negs  = itemsContainer.querySelectorAll('.item-negative');
+                const names     = itemsContainer.querySelectorAll('.item-name');
+                const negs      = itemsContainer.querySelectorAll('.item-negative');
+                const fixedCbs  = itemsContainer.querySelectorAll('.item-fixed');
+                const fixedVals = itemsContainer.querySelectorAll('.item-fixed-value');
                 names[names.length - 1].value = it.name || '';
                 negs[negs.length - 1].checked = !!it.negative;
+                fixedCbs[fixedCbs.length - 1].checked = it.fixedPoints != null;
+                fixedVals[fixedVals.length - 1].value = it.fixedPoints || '';
+                fixedVals[fixedVals.length - 1].style.display = it.fixedPoints != null ? '' : 'none';
             });
             if ((tpl.items || []).length === 0) addItemInput();
 
@@ -3849,10 +3989,15 @@
             roundItemsContainer.innerHTML = '';
             (tpl.roundItems || []).forEach(it => {
                 addRoundItemInput();
-                const names = roundItemsContainer.querySelectorAll('.round-item-name');
-                const negs  = roundItemsContainer.querySelectorAll('.round-item-negative');
+                const names     = roundItemsContainer.querySelectorAll('.round-item-name');
+                const negs      = roundItemsContainer.querySelectorAll('.round-item-negative');
+                const fixedCbs  = roundItemsContainer.querySelectorAll('.round-item-fixed');
+                const fixedVals = roundItemsContainer.querySelectorAll('.round-item-fixed-value');
                 names[names.length - 1].value = it.name || '';
                 negs[negs.length - 1].checked = !!it.negative;
+                fixedCbs[fixedCbs.length - 1].checked = it.fixedPoints != null;
+                fixedVals[fixedVals.length - 1].value = it.fixedPoints || '';
+                fixedVals[fixedVals.length - 1].style.display = it.fixedPoints != null ? '' : 'none';
             });
             if ((tpl.roundItems || []).length === 0) addRoundItemInput();
         }
@@ -3871,35 +4016,26 @@
                 roundScoringMode: 'all_at_end',
                 items: type === 'items' ?
                     Array.from(document.querySelectorAll('.item-name'))
-                        .map((inp, i) => ({ name: inp.value.trim(), negative: document.querySelectorAll('.item-negative')[i].checked }))
+                        .map((inp, i) => {
+                            const fixedCb  = document.querySelectorAll('.item-fixed')[i];
+                            const fixedVal = document.querySelectorAll('.item-fixed-value')[i];
+                            return { name: inp.value.trim(), negative: document.querySelectorAll('.item-negative')[i].checked, fixedPoints: fixedCb?.checked ? (parseInt(fixedVal?.value) || 0) : null };
+                        })
                         .filter(it => it.name) : [],
                 roundItems: type === 'rounds_with_items' ?
                     Array.from(document.querySelectorAll('.round-item-name'))
-                        .map((inp, i) => ({ name: inp.value.trim(), negative: document.querySelectorAll('.round-item-negative')[i].checked }))
+                        .map((inp, i) => {
+                            const fixedCb  = document.querySelectorAll('.round-item-fixed')[i];
+                            const fixedVal = document.querySelectorAll('.round-item-fixed-value')[i];
+                            return { name: inp.value.trim(), negative: document.querySelectorAll('.round-item-negative')[i].checked, fixedPoints: fixedCb?.checked ? (parseInt(fixedVal?.value) || 0) : null };
+                        })
                         .filter(it => it.name) : [],
             };
             if (pt.maxPlayers) tpl.maxPlayers = pt.maxPlayers;
 
             const list = getCustomTemplates();
             if (pt.index !== null) {
-                const oldEmoji = list[pt.index].emoji;
                 list[pt.index] = tpl;
-                if (tpl.emoji !== oldEmoji) {
-                    const nameNorm = tpl.name.trim().toLowerCase();
-                    const history = getHistory();
-                    let changed = false;
-                    history.forEach(e => {
-                        if (e.sharedBy) return;
-                        if (e.gameName.trim().toLowerCase() === nameNorm) { e.emoji = tpl.emoji; changed = true; }
-                    });
-                    if (changed) {
-                        saveHistory(history);
-                        if (window._fbSaveEntry) {
-                            history.filter(e => !e.sharedBy && e.gameName.trim().toLowerCase() === nameNorm)
-                                   .forEach(e => window._fbSaveEntry(e));
-                        }
-                    }
-                }
             } else {
                 list.push(tpl);
             }
@@ -3956,6 +4092,32 @@
                 document.getElementById('tplFormError').textContent = 'El nombre es obligatorio.';
                 return;
             }
+            const normName = normStr(name);
+            const allTpls = getCustomTemplates();
+            const otherTpls = _editingTemplateIndex !== null
+                ? allTpls.filter((_, i) => i !== _editingTemplateIndex)
+                : allTpls;
+            if (otherTpls.some(t => normStr(t.name) === normName)) {
+                document.getElementById('tplFormError').textContent = 'Ya hay un juego en la biblioteca con ese nombre.';
+                return;
+            }
+            // Calcular el nombre a excluir del chequeo de historial:
+            // - Al editar: excluir el nombre actual de la plantilla (es su propio historial)
+            // - Al crear desde historial: excluir el nombre pre-rellenado (proviene del historial)
+            // - Al crear desde cero: sin exclusión → bloquear si ya existe en historial
+            let excludedNorm = null;
+            if (_editingTemplateIndex !== null) {
+                excludedNorm = normStr(allTpls[_editingTemplateIndex].name);
+            } else if (_pendingHistoryTpl !== null) {
+                excludedNorm = normName;
+            }
+            if (getHistory().some(e => {
+                const n = normStr(e.gameName);
+                return n === normName && n !== excludedNorm;
+            })) {
+                document.getElementById('tplFormError').textContent = 'Ya hay un juego en el historial con ese nombre.';
+                return;
+            }
             if (!_tplScoringConfigured) {
                 document.getElementById('tplFormError').textContent = 'Configura primero la plantilla de puntuación.';
                 return;
@@ -3977,41 +4139,12 @@
             if (maxP >= 2) tpl.maxPlayers = maxP;
 
             const list = getCustomTemplates();
-            const existingInList = _editingTemplateIndex !== null ? list[_editingTemplateIndex] : null;
-            const oldName = existingInList ? existingInList.name : tpl.name;
-            const oldEmoji = existingInList ? (existingInList.emoji || '🎲') : null;
             if (_editingTemplateIndex !== null) {
                 list[_editingTemplateIndex] = tpl;
             } else {
                 list.push(tpl);
             }
             saveCustomTemplates(list);
-
-            // ── Propagar nombre y/o emoji al historial (solo entradas propias) ──
-            if (_editingTemplateIndex !== null) {
-                const nameChanged = normStr(tpl.name) !== normStr(oldName);
-                const emojiChanged = tpl.emoji !== oldEmoji;
-                if (nameChanged || emojiChanged) {
-                    const oldNameNorm = normStr(oldName);
-                    const history = getHistory();
-                    let changed = false;
-                    history.forEach(e => {
-                        if (e.sharedBy) return;
-                        if (normStr(e.gameName) === oldNameNorm) {
-                            if (nameChanged) e.gameName = tpl.name;
-                            if (emojiChanged) e.emoji = tpl.emoji;
-                            changed = true;
-                        }
-                    });
-                    if (changed) {
-                        saveHistory(history);
-                        if (window._fbSaveEntry) {
-                            history.filter(e => !e.sharedBy && normStr(e.gameName) === normStr(tpl.name))
-                                   .forEach(e => window._fbSaveEntry(e));
-                        }
-                    }
-                }
-            }
 
             document.getElementById('templateFormModal').style.display = 'none';
             renderLibraryShelves();
@@ -4752,17 +4885,8 @@
         }
 
         function _saveEmojiForGame(gameKey, emoji) {
-            const history = getHistory();
-            history.forEach(e => {
-                if (e.gameName.trim().toLowerCase() === gameKey) e.emoji = emoji;
-            });
-            saveHistory(history);
             document.getElementById('gameDetailEmoji').textContent = emoji;
             document.querySelectorAll('#gameDetailBody .history-card-emoji').forEach(c => c.textContent = emoji);
-            if (window._fbSaveEntry) {
-                history.filter(e => e.gameName.trim().toLowerCase() === gameKey)
-                       .forEach(e => window._fbSaveEntry(e));
-            }
             const statsCard = document.getElementById('statsCard-game');
             if (statsCard && statsCard.classList.contains('open')) {
                 statsCard.innerHTML = buildStatsGame(getHistory());

@@ -131,6 +131,18 @@
             }
         };
 
+        // Actualiza campos de una partida existente en Firestore
+        window._fbUpdateEntry = async (entryId, updatedFields) => {
+            const user = auth.currentUser;
+            if (!user) return;
+            try {
+                const ref = doc(db, 'matches', String(entryId));
+                await updateDoc(ref, updatedFields);
+            } catch (e) {
+                console.warn('Error actualizando en Firestore:', e);
+            }
+        };
+
         window.showSyncToast = function showSyncToast(msg) {
             let toast = document.getElementById('syncToast');
             if (!toast) {
@@ -530,12 +542,6 @@
                         window._memHistory = [entry, ...local].sort((a, b) => b.id - a.id).slice(0, 50);
                         needsRender = true;
 
-                        // Toast solo si la partida la creó otro usuario y es reciente (últimas 48h)
-                        if (data.creatorUid && data.creatorUid !== user.uid && data.id >= since) {
-                            const friend = (window._friends || []).find(f => f.uid === data.creatorUid);
-                            const who = friend?.nickname || 'Un amigo';
-                            showSyncToast(`🎲 ${who} añadió una partida a tu historial`);
-                        }
 
                     } else if (change.type === 'modified') {
                         // Actualizar la entrada existente en caché
