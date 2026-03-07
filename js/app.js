@@ -1,3 +1,5 @@
+        const APP_VERSION = '1.0.0';
+
         // Prevent all zoom: double-tap, pinch gesture (iOS & Android)
         document.addEventListener('gesturestart',  function(e) { e.preventDefault(); }, { passive: false });
         document.addEventListener('gesturechange', function(e) { e.preventDefault(); }, { passive: false });
@@ -664,6 +666,15 @@
                 renderFrecuentChips(); // Actualizar chips para que jugadores conectados eliminados vuelvan a aparecer
             }
         }
+
+        // Mostrar versión en ajustes y footer
+        document.addEventListener('DOMContentLoaded', () => {
+            const vStr = `v${APP_VERSION}`;
+            const el1 = document.getElementById('appVersionDisplay');
+            const el2 = document.getElementById('footerVersionDisplay');
+            if (el1) el1.textContent = vStr;
+            if (el2) el2.textContent = vStr;
+        });
 
         // Escuchar cambios en los inputs de nombre para actualizar píldoras en tiempo real
         document.addEventListener('DOMContentLoaded', () => {
@@ -2347,18 +2358,7 @@
             });
             updateTimerOptions();
             clearLibrarySelection();
-            document.getElementById('playersContainer').innerHTML = `
-                <div class="player-input-row">
-                    <input type="text" placeholder="Nombre del jugador 1" class="player-name">
-                    <button class="player-color-btn" style="background:#e74c3c;" data-color="#e74c3c" onclick="openColorPicker(this)" title="Color del jugador"></button>
-                    <button onclick="removePlayerInput(this)" class="remove-player-btn" style="display: none;"><svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button>
-                </div>
-                <div class="player-input-row">
-                    <input type="text" placeholder="Nombre del jugador 2" class="player-name">
-                    <button class="player-color-btn" style="background:#3498db;" data-color="#3498db" onclick="openColorPicker(this)" title="Color del jugador"></button>
-                    <button onclick="removePlayerInput(this)" class="remove-player-btn" style="display: none;"><svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button>
-                </div>
-            `;
+            document.getElementById('playersContainer').innerHTML = '';
             document.getElementById('itemsContainer').innerHTML = `
                 <div class="scoring-item">
                     <input type="text" placeholder="Nombre del ítem (ej: Ciudades)" class="item-name">
@@ -2378,7 +2378,10 @@
                     </div>
                 </div>
             `;
-            
+
+            document.getElementById('roundItemsContainer').innerHTML = '';
+            if (typeof addRoundItemInput === 'function') addRoundItemInput();
+
             showScreen('setupScreen');
         }
 
@@ -3638,8 +3641,10 @@
             const container = document.getElementById('playersContainer');
             const existing = Array.from(container.querySelectorAll('.player-name')).map(i => i.value.trim());
             if (existing.includes(name)) return;
+            const countBefore = container.querySelectorAll('.player-input-row').length;
             addPlayerInput();
             const rows = container.querySelectorAll('.player-input-row');
+            if (rows.length <= countBefore) return; // at max, no new row was created
             rows[rows.length - 1].querySelector('.player-name').value = name;
             updateRemoveButtons(true);
             updatePlayerPills();
@@ -3650,8 +3655,10 @@
             const container = document.getElementById('playersContainer');
             const existing = Array.from(container.querySelectorAll('.player-name')).map(i => i.value.trim());
             if (existing.includes(name)) return;
+            const countBefore = container.querySelectorAll('.player-input-row').length;
             addPlayerInput();
             const rows = container.querySelectorAll('.player-input-row');
+            if (rows.length <= countBefore) return; // at max, no new row was created
             const targetRow = rows[rows.length - 1];
             targetRow.querySelector('.player-name').value = name;
             const colorBtn = targetRow.querySelector('.player-color-btn');
@@ -3677,8 +3684,10 @@
                 return;
             }
 
+            const countBefore = container.querySelectorAll('.player-input-row').length;
             addPlayerInput();
             const rows = container.querySelectorAll('.player-input-row');
+            if (rows.length <= countBefore) return; // at max, no new row was created
             const newRow = rows[rows.length - 1];
             newRow.querySelector('.player-name').value = name;
             updateRemoveButtons(true);
@@ -3938,7 +3947,11 @@
             _editingTemplateScoringMode = true;
 
             const tplToLoad = currentTpl || _pendingHistoryTpl;
-            if (tplToLoad) loadScoringSetupFromTemplate(tplToLoad);
+            if (tplToLoad) {
+                loadScoringSetupFromTemplate(tplToLoad);
+            } else {
+                loadScoringSetupFromTemplate({ scoringType: 'rounds', numRounds: 5, targetScore: 40, items: [], roundItems: [] });
+            }
 
             document.getElementById('confirmScoringBtn').textContent = 'Guardar';
             document.getElementById('templateFormModal').style.display = 'none';
@@ -4013,7 +4026,7 @@
                 scoringType: type,
                 numRounds: parseInt(document.getElementById(numRoundsId).value) || 3,
                 targetScore: parseInt(document.getElementById('targetScore').value) || 40,
-                roundScoringMode: 'all_at_end',
+                roundScoringMode: document.querySelector('input[name="roundScoring"]:checked')?.value || 'all_at_end',
                 items: type === 'items' ?
                     Array.from(document.querySelectorAll('.item-name'))
                         .map((inp, i) => {

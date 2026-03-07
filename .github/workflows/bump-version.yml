@@ -1,0 +1,52 @@
+name: Bump version
+
+on:
+  push:
+    branches: [main]
+
+jobs:
+  bump:
+    # No ejecutar si el commit ya es el bump de versión (evita bucle infinito)
+    if: "!startsWith(github.event.head_commit.message, 'chore: bump version')"
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Calcular nueva versión (sube el patch)
+        id: bump
+        run: |
+          CURRENT=$(python3 -c "import json; print(json.load(open('version.json'))['version'])")
+          MAJOR=$(echo $CURRENT | cut -d. -f1)
+          MINOR=$(echo $CURRENT | cut -d. -f2)
+          PATCH=$(echo $CURRENT | cut -d. -f3)
+          NEW_PATCH=$((PATCH + 1))
+          NEW_VERSION="$MAJOR.$MINOR.$NEW_PATCH"
+          echo "new_version=$NEW_VERSION" >> $GITHUB_OUTPUT
+          echo "Versión: $CURRENT → $NEW_VERSION"
+
+      - name: Actualizar version.json
+        run: |
+          echo '{"version": "${{ steps.bump.outputs.new_version }}"}' > version.json
+
+      - name: Actualizar CACHE_VERSION en sw.js
+        run: |
+          V="${{ steps.bump.outputs.new_version }}"
+          sed -i "s/const CACHE_VERSION = 'bgtime-v[^']*'/const CACHE_VERSION = 'bgtime-v$V'/" sw.js
+
+      - name: Actualizar APP_VERSION en app.js
+        run: |
+          V="${{ steps.bump.outputs.new_version }}"
+          sed -i "s/const APP_VERSION = '[^']*'/const APP_VERSION = '$V'/" js/app.js
+
+      - name: Commit y push
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add version.json sw.js js/app.js
+          git commit -m "chore: bump version to ${{ steps.bump.outputs.new_version }}"
+          git push
