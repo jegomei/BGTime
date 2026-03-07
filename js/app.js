@@ -4378,8 +4378,9 @@
 
         async function confirmDeleteFriend() {
             if (!_pendingRemoveFriendId || !window._fbRemoveConnection) return;
+            const idToRemove = _pendingRemoveFriendId; // guardar antes de que closeDeleteFriendModal lo ponga a null
             closeDeleteFriendModal();
-            await window._fbRemoveConnection(_pendingRemoveFriendId);
+            await window._fbRemoveConnection(idToRemove);
             // renderFriendsList se llama automáticamente via onSnapshot
         }
 
