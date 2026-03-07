@@ -372,28 +372,26 @@
             
             renderFrecuentChips();
 
-            // Inicializar el contenedor de jugadores oculto si está vacío
+            // Reinicializar siempre el contenedor de jugadores (evita filas fantasma de partidas anteriores)
             const container = document.getElementById('playersContainer');
-            if (container.children.length === 0) {
-                // Rellenar jugador 1 con el perfil del usuario si está logueado
-                const profile = window._currentProfile;
-                if (profile && profile.nickname) {
-                    const div = document.createElement('div');
-                    div.className = 'player-input-row';
-                    const defaultColor = '#e74c3c';
-                    div.innerHTML = `
-                        <input type="text" placeholder="Nombre del jugador 1" class="player-name" value="${profile.nickname}">
-                        <button class="player-color-btn" style="background:${defaultColor};" data-color="${defaultColor}" onclick="openColorPicker(this)" title="Color del jugador"></button>
-                        <button onclick="removePlayerInput(this)" class="remove-player-btn" style="display:none;"><svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button>
-                    `;
-                    container.appendChild(div);
-                    // Aplicar degradado del perfil si está disponible
-                    const colorBtn = div.querySelector('.player-color-btn');
-                    if (colorBtn && profile.color1 && profile.color2) {
-                        applyProfileGradientToBtn(colorBtn, profile.color1, profile.color2);
-                    }
+            container.innerHTML = '';
+            // Rellenar jugador 1 con el perfil del usuario si está logueado
+            const profile = window._currentProfile;
+            if (profile && profile.nickname) {
+                const div = document.createElement('div');
+                div.className = 'player-input-row';
+                const defaultColor = '#e74c3c';
+                div.innerHTML = `
+                    <input type="text" placeholder="Nombre del jugador 1" class="player-name" value="${profile.nickname}">
+                    <button class="player-color-btn" style="background:${defaultColor};" data-color="${defaultColor}" onclick="openColorPicker(this)" title="Color del jugador"></button>
+                    <button onclick="removePlayerInput(this)" class="remove-player-btn" style="display:none;"><svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button>
+                `;
+                container.appendChild(div);
+                // Aplicar degradado del perfil si está disponible
+                const colorBtn = div.querySelector('.player-color-btn');
+                if (colorBtn && profile.color1 && profile.color2) {
+                    applyProfileGradientToBtn(colorBtn, profile.color1, profile.color2);
                 }
-                // No crear la segunda fila vacía automáticamente
             }
 
             _gameInProgress = true;
