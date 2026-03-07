@@ -1,4 +1,4 @@
-        const APP_VERSION = '1.0.2';
+        const APP_VERSION = '1.0.3';
 
         // Prevent all zoom: double-tap, pinch gesture (iOS & Android)
         document.addEventListener('gesturestart',  function(e) { e.preventDefault(); }, { passive: false });
