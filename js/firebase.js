@@ -582,6 +582,14 @@
                 window._memFrecuent  = null;
                 window._memTemplates = null;
 
+                // Borrar datos localStorage del estado anónimo para evitar el flash de contenido
+                // obsoleto mientras Firebase carga. Los datos del usuario están en Firestore.
+                localStorage.removeItem('bgtime_custom_templates');
+                localStorage.removeItem('bgtime_frecuent_players');
+                localStorage.removeItem('bgtime_history');
+                // Refrescar biblioteca inmediatamente (vacía) mientras llegan los datos de Firebase
+                if (typeof rebuildLibrary === 'function') rebuildLibrary();
+
                 // Cargar historial (usa caché IndexedDB offline si no hay red)
                 loadHistoryIntoCache(user.uid);
                 // Cargar ajustes (jugadores frecuentes + plantillas)
