@@ -1,5 +1,14 @@
         const APP_VERSION = '1.0.4';
 
+        // ── Claves de localStorage ────────────────────────────────────────────
+        // Centralizar aquí evita typos y facilita renombrar en un solo lugar.
+        const STORAGE_KEYS = {
+            STATE:     'bgtime_state',
+            HISTORY:   'bgtime_history',
+            FRECUENT:  'bgtime_frecuent_players',
+            TEMPLATES: 'bgtime_custom_templates',
+        };
+
         // Prevent all zoom: double-tap, pinch gesture (iOS & Android)
         document.addEventListener('gesturestart',  function(e) { e.preventDefault(); }, { passive: false });
         document.addEventListener('gesturechange', function(e) { e.preventDefault(); }, { passive: false });
@@ -148,36 +157,37 @@
             document.getElementById('optionsChess').style.display = mode === 'chess' ? 'block' : 'none';
         }
 
-        function startGameFromPlayers() {
-            // Obtener jugadores de la pantalla
-            const playerRows = document.querySelectorAll('#playersContainer .player-input-row');
-            
-            const players = [];
-            const colors = [];
-            const gradients = [];
-            
-            playerRows.forEach(row => {
-                const name = row.querySelector('.player-name').value.trim();
-                const btn = row.querySelector('.player-color-btn');
-                const color = btn.dataset.color;
-                const gradient = btn.dataset.gradient || null;
-                if (name !== '') {
-                    players.push(name);
-                    colors.push(color);
-                    gradients.push(gradient);
-                }
-            });
+        // ── Utilidad: leer jugadores del DOM ─────────────────────────────────
+        // La lógica de iterar #playersContainer .player-input-row estaba
+        // duplicada en startGameFromPlayers, updatePlayerPills, pickRandomStartingPlayer
+        // y removePlayerFromPill. Centralizada aquí, un solo cambio si evoluciona el DOM.
+        function getPlayersFromDOM() {
+            return Array.from(
+                document.querySelectorAll('#playersContainer .player-input-row')
+            ).map((row, index) => {
+                const colorBtn = row.querySelector('.player-color-btn');
+                return {
+                    name:     row.querySelector('.player-name').value.trim(),
+                    color:    colorBtn.dataset.color,
+                    gradient: colorBtn.dataset.gradient || null,
+                    index,
+                };
+            }).filter(p => p.name !== '');
+        }
 
-            if (players.length < 2) {
+        function startGameFromPlayers() {
+            const domPlayers = getPlayersFromDOM();
+
+            if (domPlayers.length < 2) {
                 document.getElementById('playersError').textContent = 'Necesitas al menos 2 jugadores';
                 return;
             } else {
                 document.getElementById('playersError').textContent = '';
             }
 
-            gameData.players = players;
-            gameData.playerColors = colors;
-            gameData.playerGradients = gradients;
+            gameData.players       = domPlayers.map(p => p.name);
+            gameData.playerColors  = domPlayers.map(p => p.color);
+            gameData.playerGradients = domPlayers.map(p => p.gradient);
 
             // Aplicar plantilla si hay una seleccionada
             const templateSelect = document.getElementById('templateSelect');
@@ -333,6 +343,9 @@
                 refreshActiveGameBanners();
             }
 
+            // saveAppState tiene su propio guard interno (_gameInProgress).
+            // Llamarlo aquí garantiza que cualquier navegación persiste el estado
+            // del juego activo, incluso al ir a settings o stats.
             saveAppState();
         }
 
@@ -478,28 +491,10 @@
             const container = document.getElementById('selectedPlayersPills');
             if (!container) return;
 
-            const playerRows = document.querySelectorAll('#playersContainer .player-input-row');
-            const players = [];
-
-            playerRows.forEach((row, index) => {
-                const nameInput = row.querySelector('.player-name');
-                const colorBtn = row.querySelector('.player-color-btn');
-                const name = nameInput.value.trim();
-                
-                if (name) {
-                    const color = colorBtn.dataset.color;
-                    const gradient = colorBtn.dataset.gradient;
-                    const isConnected = !!gradient;
-                    
-                    players.push({
-                        name,
-                        color,
-                        gradient,
-                        isConnected,
-                        index
-                    });
-                }
-            });
+            const players = getPlayersFromDOM().map(p => ({
+                ...p,
+                isConnected: !!p.gradient,
+            }));
 
             container.classList.remove('empty');
             container.innerHTML = '';
@@ -512,20 +507,7 @@
             players.forEach(player => {
                 const pill = document.createElement('div');
                 pill.className = `player-pill ${player.isConnected ? 'connected' : 'regular'}`;
-                
-                if (player.isConnected) {
-                    // Extraer los dos colores del gradiente
-                    const gradientMatch = player.gradient.match(/linear-gradient\(135deg,\s*([^,]+),\s*([^)]+)\)/);
-                    if (gradientMatch) {
-                        pill.style.setProperty('--pill-color-1', gradientMatch[1].trim());
-                        pill.style.setProperty('--pill-color-2', gradientMatch[2].trim());
-                    } else {
-                        pill.style.setProperty('--pill-color-1', player.color);
-                        pill.style.setProperty('--pill-color-2', player.color);
-                    }
-                } else {
-                    pill.style.setProperty('--pill-color-1', player.color);
-                }
+                applyColorToElement(pill, player.color, player.gradient);
 
                 pill.innerHTML = `<span class="player-pill-name">${player.name}</span>`;
 
@@ -591,19 +573,7 @@
         }
 
         function pickRandomStartingPlayer() {
-            const playerRows = document.querySelectorAll('#playersContainer .player-input-row');
-            const players = [];
-            playerRows.forEach(row => {
-                const name = row.querySelector('.player-name').value.trim();
-                const colorBtn = row.querySelector('.player-color-btn');
-                if (name) {
-                    players.push({
-                        name,
-                        color: colorBtn.dataset.color,
-                        gradient: colorBtn.dataset.gradient || null
-                    });
-                }
-            });
+            const players = getPlayersFromDOM();
             if (players.length === 0) return;
 
             // Elegir el ganador final de antemano
@@ -622,18 +592,7 @@
                 pillDiv.innerHTML = '';
                 const pill = document.createElement('div');
                 pill.className = `player-pill ${isConnected ? 'connected' : 'regular'}${cycling ? ' cycling' : ''}`;
-                if (isConnected) {
-                    const m = player.gradient.match(/linear-gradient\(135deg,\s*([^,]+),\s*([^)]+)\)/);
-                    if (m) {
-                        pill.style.setProperty('--pill-color-1', m[1].trim());
-                        pill.style.setProperty('--pill-color-2', m[2].trim());
-                    } else {
-                        pill.style.setProperty('--pill-color-1', player.color);
-                        pill.style.setProperty('--pill-color-2', player.color);
-                    }
-                } else {
-                    pill.style.setProperty('--pill-color-1', player.color);
-                }
+                applyColorToElement(pill, player.color, player.gradient);
                 pill.innerHTML = `<span class="player-pill-name">${player.name}</span>`;
                 pillDiv.appendChild(pill);
             }
@@ -685,6 +644,20 @@
                 });
             }
         });
+
+        // ── Utilidad: aplicar color/gradiente vía CSS custom properties ──────
+        // El regex y la lógica de fallback estaban duplicados en updatePlayerPills,
+        // openColorPicker y openColorPickerWithDelete. Un único lugar para cambiar.
+        function applyColorToElement(el, color, gradient, varPrefix = '--pill-color') {
+            if (gradient) {
+                const m = gradient.match(/linear-gradient\(135deg,\s*([^,]+),\s*([^)]+)\)/);
+                el.style.setProperty(`${varPrefix}-1`, m ? m[1].trim() : color);
+                el.style.setProperty(`${varPrefix}-2`, m ? m[2].trim() : color);
+            } else {
+                el.style.setProperty(`${varPrefix}-1`, color);
+                el.style.setProperty(`${varPrefix}-2`, color);
+            }
+        }
 
         function openColorPicker(btn) {
             closeAllColorPickers();
@@ -816,6 +789,21 @@
 
         const SVG_UP_ARROW = `<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="18 15 12 9 6 15"/></svg>`;
 
+        // Mueve el jugador en la posición `index` una posición hacia arriba en los arrays de orden.
+        // Antes era una IIFE inline en el template string, lo que hacía el código ilegible.
+        function moveOrderItemUp(index) {
+            const arrays = [
+                gameData.orderedPlayers,
+                gameData.orderedColors,
+                gameData.orderedGradients,
+            ];
+            arrays.forEach(arr => {
+                const [item] = arr.splice(index, 1);
+                arr.splice(index - 1, 0, item);
+            });
+            renderOrderList();
+        }
+
         function renderOrderList() {
             const container = document.getElementById('orderOverlayContainer');
             container.innerHTML = '';
@@ -828,7 +816,7 @@
                 div.style.background = grad || gameData.orderedColors[index];
                 div.style.borderColor = gameData.orderedColors[index];
                 const btnHtml = index === 0 ? '' :
-                    `<button class="order-up-btn" onclick="(function(){const arrays=[gameData.orderedPlayers,gameData.orderedColors,gameData.orderedGradients];arrays.forEach(a=>{const[it]=a.splice(${index},1);a.splice(${index-1},0,it)});renderOrderList();})()">${SVG_UP_ARROW}</button>`;
+                    `<button class="order-up-btn" onclick="moveOrderItemUp(${index})">${SVG_UP_ARROW}</button>`;
                 div.innerHTML = `
                     <div class="order-player-name" style="color:#fff;text-shadow:0 1px 4px rgba(0,0,0,0.4);">${player}</div>
                     ${btnHtml}
@@ -2307,8 +2295,8 @@
             }
             // Liberar Wake Lock al resetear el juego
             releaseWakeLock();
-            localStorage.removeItem('bgtime_state');
-            
+            localStorage.removeItem(STORAGE_KEYS.STATE);
+
             gameData = {
                 gameName: '',
                 players: [],
@@ -2818,7 +2806,7 @@
 
         function saveAppState() {
             if (!_gameInProgress) {
-                localStorage.removeItem('bgtime_state');
+                localStorage.removeItem(STORAGE_KEYS.STATE);
                 return;
             }
             const activeScreen = document.querySelector('.screen.active');
@@ -2832,7 +2820,7 @@
                 screenId = _activeGameScreenId;
             }
             try {
-                localStorage.setItem('bgtime_state', JSON.stringify({
+                localStorage.setItem(STORAGE_KEYS.STATE, JSON.stringify({
                     screenId,
                     gameData,
                     timerData: { ...timerData, interval: null }
@@ -2842,7 +2830,7 @@
 
         function restoreAppState() {
             try {
-                const saved = localStorage.getItem('bgtime_state');
+                const saved = localStorage.getItem(STORAGE_KEYS.STATE);
                 if (!saved) return false;
                 const { screenId, gameData: gd, timerData: td } = JSON.parse(saved);
                 if (!screenId || !gd || screenId === 'setupScreen') return false;
@@ -2877,7 +2865,7 @@
                 showScreen('setupScreen');
                 return true;
             } catch(e) {
-                localStorage.removeItem('bgtime_state');
+                localStorage.removeItem(STORAGE_KEYS.STATE);
                 // Resetear estado para que el dado no quede visible sin partida activa
                 _gameInProgress = false;
                 const btn = document.getElementById('activeGameBtn');
@@ -3315,34 +3303,37 @@
         // ══════════════════════════════════════════════════════════════
 
         // ── Helpers de datos (localStorage cuando deslogueado, caché en memoria cuando logueado) ──
-        function getHistory() {
-            if (window._fbIsLoggedIn?.()) return window._memHistory || [];
-            return JSON.parse(localStorage.getItem('bgtime_history') || '[]');
+        // getData/setData encapsulan el patrón dual Firebase/localStorage que se repite en cada
+        // función de acceso a datos. Esto evita duplicar el if(_fbIsLoggedIn) en 6 lugares.
+        function getData(memKey, storageKey) {
+            if (window._fbIsLoggedIn?.()) return window[memKey] || [];
+            return JSON.parse(localStorage.getItem(storageKey) || '[]');
         }
-        function saveHistory(arr) {
-            if (window._fbIsLoggedIn?.()) { window._memHistory = arr; }
-            else { localStorage.setItem('bgtime_history', JSON.stringify(arr)); }
+        function setData(memKey, storageKey, value) {
+            if (window._fbIsLoggedIn?.()) {
+                window[memKey] = value;
+            } else {
+                // Solo escribir en localStorage cuando NO hay sesión activa.
+                // Fix: antes saveFrecuentPlayers siempre escribía en localStorage
+                // aunque hubiera sesión, lo que era inconsistente con la lectura.
+                localStorage.setItem(storageKey, JSON.stringify(value));
+            }
         }
+
+        function getHistory()         { return getData('_memHistory',   STORAGE_KEYS.HISTORY);   }
+        function saveHistory(arr)     { setData('_memHistory',   STORAGE_KEYS.HISTORY,   arr);   }
         function removeHistory() {
             window._memHistory = [];
-            localStorage.removeItem('bgtime_history');
+            localStorage.removeItem(STORAGE_KEYS.HISTORY);
         }
-        function getFrecuentPlayers() {
-            if (window._fbIsLoggedIn?.()) return window._memFrecuent || [];
-            return JSON.parse(localStorage.getItem('bgtime_frecuent_players') || '[]');
-        }
+        function getFrecuentPlayers() { return getData('_memFrecuent',  STORAGE_KEYS.FRECUENT);  }
         function saveFrecuentPlayers(list) {
-            if (window._fbIsLoggedIn?.()) { window._memFrecuent = list; }
-            localStorage.setItem('bgtime_frecuent_players', JSON.stringify(list));
+            setData('_memFrecuent', STORAGE_KEYS.FRECUENT, list);
             if (window._fbSaveSettings) window._fbSaveSettings();
         }
-        function getCustomTemplates() {
-            if (window._fbIsLoggedIn?.()) return window._memTemplates || [];
-            return JSON.parse(localStorage.getItem('bgtime_custom_templates') || '[]');
-        }
+        function getCustomTemplates() { return getData('_memTemplates', STORAGE_KEYS.TEMPLATES); }
         function saveCustomTemplates(list) {
-            if (window._fbIsLoggedIn?.()) { window._memTemplates = list; }
-            localStorage.setItem('bgtime_custom_templates', JSON.stringify(list));
+            setData('_memTemplates', STORAGE_KEYS.TEMPLATES, list);
             rebuildLibrary();
             if (window._fbSaveSettings) window._fbSaveSettings();
         }
