@@ -2606,13 +2606,6 @@
                 `<div class="history-modal-result-row">${i + 1}. ${r.player}: ${r.score} pts${i === 0 ? ' 👑' : ''}</div>`
             ).join('');
 
-            const hasTemplate = (getCustomTemplates ? getCustomTemplates() : [])
-                .some(t => normStr(t.name) === normStr(entry.gameName));
-
-            const addToLibBtn = !hasTemplate
-                ? `<button class="secondary" style="width:100%;margin-top:12px;" onclick="addHistoryGameToLibrary()">+ Añadir a la biblioteca</button>`
-                : '';
-
             const container = document.getElementById('historyDetailTable');
             container.innerHTML = `
                 <div class="history-modal-game-title">${entry.emoji || '🎲'} ${entry.gameName}</div>
@@ -2622,7 +2615,6 @@
                     Puntuación detallada
                 </button>
                 <div class="history-modal-detail-table" style="display:none">${buildHistoryDetailTable(entry)}</div>
-                ${addToLibBtn}
             `;
 
             // Botón editar: solo el creador puede editar (sin límite de tiempo)
@@ -2633,13 +2625,6 @@
             editBtn.style.display = isCreator ? 'flex' : 'none';
 
             document.getElementById('historyDetailModal').style.display = 'flex';
-        }
-
-        function addHistoryGameToLibrary() {
-            const entry = _currentHistoryEntry;
-            if (!entry) return;
-            document.getElementById('historyDetailModal').style.display = 'none';
-            createTemplateFromHistory(entry.gameName);
         }
 
         function toggleHistoryDetailTable(btn) {
@@ -3360,7 +3345,6 @@
         // ── Render settings ───────────────────────────────────────────
         function renderSettingsScreen() {
             renderFrecuentPlayersList();
-            renderCustomTemplatesList();
             if (window._fbIsLoggedIn && window._fbIsLoggedIn()) {
                 renderFriendsList();
                 if (window._fbLoadProfile) window._fbLoadProfile();
@@ -3685,91 +3669,6 @@
         }
 
         // ── Mis plantillas + Juegos del historial ────────────────────
-        function renderCustomTemplatesList(showAllTpl = false, showAllHist = false) {
-            const templates = getCustomTemplates();
-            const history   = getHistory();
-            const LIMIT = 5;
-
-            const svgEdit = `<svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/></svg>`;
-            const svgDel  = `<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>`;
-            const svgPlus = `<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>`;
-            const svgChevron = `<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg>`;
-
-            // ── Tarjeta "Mis plantillas" ──────────────────────────────
-            const tplContainer = document.getElementById('customTemplatesList');
-            if (tplContainer) {
-                if (templates.length === 0) {
-                    tplContainer.innerHTML = '<p style="color:var(--text-secondary);font-size:14px;">Aún no tienes plantillas. Crea una o juega una partida.</p>';
-                } else {
-                    // Ordenar: favoritas primero, luego el resto
-                    const sorted = [
-                        ...templates.map((t, i) => ({ ...t, _origIndex: i })).filter(t => t.favorite),
-                        ...templates.map((t, i) => ({ ...t, _origIndex: i })).filter(t => !t.favorite)
-                    ];
-                    const svgStarFull  = `<svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="currentColor" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>`;
-                    const svgStarEmpty = `<svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>`;
-                    const visible = showAllTpl ? sorted : sorted.slice(0, LIMIT);
-                    const rows = visible.map(tpl => {
-                        const i = tpl._origIndex;
-                        const isFav = tpl.favorite;
-                        const starSvg = isFav ? svgStarFull : svgStarEmpty;
-                        const starColor = isFav ? '#f5a623' : 'var(--text-secondary)';
-                        return `
-                        <div class="custom-tpl-item">
-                            <span>${tpl.emoji || '🎲'} <strong>${tpl.name}</strong> <span style="font-size:12px;color:var(--text-secondary);">${scoringTypeLabel(tpl.scoringType)}</span></span>
-                            <div class="custom-tpl-item-actions">
-                                <button class="custom-tpl-btn" data-fav-index="${i}" onclick="toggleFavoriteTemplate(${i})" title="${isFav ? 'Quitar de favoritas' : 'Marcar como favorita'}" style="color:${starColor};">${starSvg}</button>
-                                <button class="custom-tpl-btn" onclick="editCustomTemplate(${i})" title="Editar" style="color:#7c6cfc;">${svgEdit}</button>
-                                <button class="custom-tpl-btn" onclick="deleteCustomTemplate(${i})" title="Eliminar" style="color:#e74c3c;">${svgDel}</button>
-                            </div>
-                        </div>
-                    `}).join('');
-                    const remaining = sorted.length - LIMIT;
-                    const showMoreBtn = (!showAllTpl && sorted.length > LIMIT)
-                        ? `<button class="secondary" onclick="renderCustomTemplatesList(true, ${showAllHist})" style="width:100%;margin-top:10px;display:flex;align-items:center;justify-content:center;gap:8px;">${svgChevron}Ver ${remaining} plantilla${remaining !== 1 ? 's' : ''} más</button>`
-                        : '';
-                    tplContainer.innerHTML = rows + showMoreBtn;
-                }
-            }
-
-            // ── Tarjeta "Juegos del historial" ────────────────────────
-            const histContainer = document.getElementById('historyGamesList');
-            if (!histContainer) return;
-
-            // Índice de plantillas por nombre normalizado
-            const tplByName = new Set(templates.map(t => t.name.trim().toLowerCase()));
-
-            // Juegos únicos del historial sin plantilla propia
-            const seen = new Set();
-            const historyOnlyGames = [];
-            history.forEach(entry => {
-                const key = entry.gameName.trim().toLowerCase();
-                if (!tplByName.has(key) && !seen.has(key)) {
-                    seen.add(key);
-                    historyOnlyGames.push({ name: entry.gameName, emoji: entry.emoji || '🎲' });
-                }
-            });
-
-            if (historyOnlyGames.length === 0) {
-                histContainer.innerHTML = '<p style="color:var(--text-secondary);font-size:14px;">Todos tus juegos ya tienen plantilla.</p>';
-            } else {
-                const visibleHist = showAllHist ? historyOnlyGames : historyOnlyGames.slice(0, LIMIT);
-                const histRows = visibleHist.map(g => `
-                    <div class="custom-tpl-item">
-                        <span>${g.emoji} <strong>${g.name}</strong></span>
-                        <div class="custom-tpl-item-actions">
-                            <button class="custom-tpl-btn" onclick="createTemplateFromHistory('${g.name.replace(/'/g, "\\'")}')" title="Añadir a mis plantillas" style="color:#7c6cfc;">${svgPlus}</button>
-                        </div>
-                    </div>
-                `).join('');
-                const remainingHist = historyOnlyGames.length - LIMIT;
-                const showMoreHist = (!showAllHist && historyOnlyGames.length > LIMIT)
-                    ? `<button class="secondary" onclick="renderCustomTemplatesList(${showAllTpl}, true)" style="width:100%;margin-top:10px;display:flex;align-items:center;justify-content:center;gap:8px;">${svgChevron}Ver ${remainingHist} juego${remainingHist !== 1 ? 's' : ''} más</button>`
-                    : '';
-                histContainer.innerHTML = histRows + showMoreHist;
-            }
-        }
-
         // Crea una plantilla a partir del último juego con ese nombre en el historial
         function createTemplateFromHistory(gameName) {
             const history = getHistory();
@@ -3794,25 +3693,6 @@
             document.getElementById('tplFormError').textContent = '';
             document.getElementById('tplDeleteBtn').style.display = 'none';
             document.getElementById('templateFormModal').style.display = 'flex';
-        }
-
-        function toggleFavoriteTemplate(index) {
-            const list = getCustomTemplates();
-            const tpl = list[index];
-            const favCount = list.filter(t => t.favorite).length;
-            if (!tpl.favorite && favCount >= 3) {
-                // Ya hay 3 favoritas, no permitir más — feedback visual breve
-                const btn = document.querySelector(`[data-fav-index="${index}"]`);
-                if (btn) {
-                    btn.style.transform = 'scale(1.4)';
-                    setTimeout(() => btn.style.transform = '', 300);
-                }
-                return;
-            }
-            tpl.favorite = !tpl.favorite;
-            saveCustomTemplates(list);
-            renderCustomTemplatesList();
-            renderLibraryShelves();
         }
 
         function scoringTypeLabel(type) {
@@ -3851,7 +3731,6 @@
             if (window._fbDeleteTemplate) window._fbDeleteTemplate(tpl.id);
             closeDeleteTemplateModal();
             document.getElementById('templateFormModal').style.display = 'none';
-            renderCustomTemplatesList();
             renderLibraryShelves();
         }
         // ── Formulario de plantilla ───────────────────────────────────
