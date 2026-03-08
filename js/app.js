@@ -2625,13 +2625,12 @@
                 ${addToLibBtn}
             `;
 
-            // Botón editar: solo si es reciente (<5 min) y es el creador
+            // Botón editar: solo el creador puede editar (sin límite de tiempo)
             const editBtn = document.getElementById('historyDetailEditBtn');
             const currentUid = window._fbCurrentUid?.();
             const isCreator = !window._fbIsLoggedIn?.()
                 || (entry.creatorUid && entry.creatorUid === currentUid);
-            const isRecent = (Date.now() - entry.id) < 5 * 60 * 1000;
-            editBtn.style.display = (isCreator && isRecent) ? 'flex' : 'none';
+            editBtn.style.display = isCreator ? 'flex' : 'none';
 
             document.getElementById('historyDetailModal').style.display = 'flex';
         }
