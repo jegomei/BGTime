@@ -5076,6 +5076,9 @@
             popover.style.display = '';
             const picker = popover.querySelector('emoji-picker');
 
+            // Traducir el placeholder del buscador al español
+            picker.i18n = { ...picker.i18n, search: 'Buscar' };
+
             // Reemplazar listener previo para evitar duplicados entre aperturas
             if (picker._emojiHandler) picker.removeEventListener('emoji-click', picker._emojiHandler);
             picker._emojiHandler = (e) => {
