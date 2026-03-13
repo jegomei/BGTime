@@ -395,6 +395,30 @@
             </div>
         </div>
 
+        <!-- Modal: Exportación BGStats -->
+        <div id="bgstatsExportModal" style="display:none;position:fixed;inset:0;z-index:2000;background:rgba(0,0,0,0.55);align-items:center;justify-content:center;padding:16px;" onclick="closeBGStatsExportModal(event)">
+            <div style="background:var(--container-bg);border-radius:16px;max-width:520px;width:100%;max-height:85vh;display:flex;flex-direction:column;box-shadow:0 8px 40px rgba(0,0,0,0.4);animation:modalIn 0.18s ease;">
+                <!-- Cabecera -->
+                <div style="display:flex;justify-content:space-between;align-items:center;padding:18px 16px 14px;border-bottom:1px solid var(--border-color);flex-shrink:0;">
+                    <div>
+                        <h2 style="margin:0;font-size:17px;color:var(--text-primary);">Exportar a BGStats</h2>
+                        <p id="bgstatsExportSubtitle" style="margin:3px 0 0;font-size:13px;color:var(--text-secondary);"></p>
+                    </div>
+                    <button onclick="document.getElementById('bgstatsExportModal').style.display='none'" style="background:none;border:none;cursor:pointer;color:var(--text-secondary);min-height:unset;padding:4px 8px;margin:0;"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button>
+                </div>
+                <!-- Lista de partidas -->
+                <div id="bgstatsExportList" style="overflow-y:auto;flex:1;padding:4px 12px;"></div>
+                <!-- Pie -->
+                <div style="padding:14px 16px;border-top:1px solid var(--border-color);display:flex;gap:10px;flex-shrink:0;">
+                    <button class="secondary" onclick="document.getElementById('bgstatsExportModal').style.display='none'" style="flex:1;margin:0;">Cancelar</button>
+                    <button id="bgstatsExportBtn" onclick="runBGStatsExport()" style="flex:1;margin:0;display:flex;align-items:center;justify-content:center;gap:7px;">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+                        Exportar
+                    </button>
+                </div>
+            </div>
+        </div>
+
         <!-- Modal: Detalle de partida del historial -->
         <!-- Modal: Importación BGStats (2 pasos) -->
         <div id="bgstatsPreviewModal" style="display:none;position:fixed;inset:0;z-index:2000;background:rgba(0,0,0,0.55);align-items:center;justify-content:center;padding:16px;" onclick="closeBGStatsPreviewModal(event)">
@@ -660,6 +684,19 @@
                     Seleccionar archivo JSON
                 </button>
                 <div id="bgstatsImportStatus" style="margin-top:10px;font-size:13px;"></div>
+            </div>
+
+            <!-- Exportar a BGStats -->
+            <div class="settings-section">
+                <h2 style="display:flex;align-items:center;">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:middle;margin-right:8px;flex-shrink:0;"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/><line x1="12" y1="3" x2="12" y2="15" stroke-width="0"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+                    Exportar a BGStats
+                </h2>
+                <p class="settings-desc">Exporta partidas de tu historial en un archivo JSON compatible con BGStats para importarlas en esa app.</p>
+                <button onclick="openBGStatsExportModal()" style="display:flex;align-items:center;gap:8px;margin-top:12px;">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+                    Seleccionar partidas para exportar
+                </button>
             </div>
 
             <!-- Versión -->

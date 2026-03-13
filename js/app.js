@@ -3689,6 +3689,285 @@
             el.textContent = msg;
         }
 
+        // ── Exportar a BGStats ─────────────────────────────────────────────
+
+        let _bgstatsExportEntries = [];
+
+        function openBGStatsExportModal() {
+            const history = getHistory();
+            if (!history || history.length === 0) {
+                alert('No hay partidas en el historial para exportar.');
+                return;
+            }
+            // Copia profunda para no mutar el historial
+            _bgstatsExportEntries = history.map(e => ({ ...e }));
+            _renderBGStatsExportList();
+            const modal = document.getElementById('bgstatsExportModal');
+            modal.style.display = 'flex';
+        }
+
+        function closeBGStatsExportModal(e) {
+            const modal = document.getElementById('bgstatsExportModal');
+            if (e && e.target !== modal) return;
+            modal.style.display = 'none';
+        }
+
+        function _renderBGStatsExportList() {
+            const n = _bgstatsExportEntries.length;
+            document.getElementById('bgstatsExportSubtitle').textContent =
+                `${n} partida${n !== 1 ? 's' : ''} seleccionada${n !== 1 ? 's' : ''}`;
+            const exportBtn = document.getElementById('bgstatsExportBtn');
+            exportBtn.disabled = n === 0;
+
+            const crownSvg = '<svg xmlns="http://www.w3.org/2000/svg" width="10" height="10" viewBox="0 0 24 24" fill="currentColor" stroke="none"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>';
+            const trashSvg = '<svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/></svg>';
+
+            const list = document.getElementById('bgstatsExportList');
+
+            if (n === 0) {
+                list.innerHTML = '<p style="text-align:center;color:var(--text-secondary);padding:28px 0;font-size:14px;">No quedan partidas para exportar.</p>';
+                return;
+            }
+
+            list.innerHTML = _bgstatsExportEntries.map((entry, i) => {
+                const winner = entry.results && entry.results[0];
+                const winnerScore = winner && winner.score !== null ? ` · ${winner.score} pts` : '';
+                const winnerBadge = winner
+                    ? `<span class="stats-game-winner-badge">${crownSvg}${winner.player}${winnerScore}</span>`
+                    : '';
+                const others = (entry.results || []).slice(1).map(r =>
+                    r.score !== null ? `${r.player} ${r.score}` : r.player
+                ).join(' · ');
+                const othersHtml = others ? `<span style="color:var(--text-secondary)">${others}</span>` : '';
+                return `
+                <div class="stats-game-row" style="padding-right:4px;">
+                    <span class="stats-game-emoji">${entry.emoji || '🎲'}</span>
+                    <div class="stats-game-info">
+                        <div class="stats-game-name">${entry.gameName}</div>
+                        <div class="stats-game-meta">
+                            <span style="color:var(--text-muted)">${entry.date}</span>
+                            ${winnerBadge}
+                            ${othersHtml}
+                        </div>
+                    </div>
+                    <button onclick="removeBGStatsExportEntry(${i})" title="Eliminar" style="background:var(--btn-red-gradient);color:white;border:none;border-radius:8px;padding:8px 10px;cursor:pointer;min-height:unset;margin:0;display:flex;align-items:center;justify-content:center;flex-shrink:0;box-shadow:none;">${trashSvg}</button>
+                </div>`;
+            }).join('');
+        }
+
+        function removeBGStatsExportEntry(index) {
+            _bgstatsExportEntries.splice(index, 1);
+            _renderBGStatsExportList();
+        }
+
+        function runBGStatsExport() {
+            if (_bgstatsExportEntries.length === 0) return;
+            const json = buildBGStatsJSON(_bgstatsExportEntries);
+            const now = new Date();
+            const pad = n => String(n).padStart(2, '0');
+            const filename = `BGStatsExport-${now.getFullYear()}${pad(now.getMonth()+1)}${pad(now.getDate())}${pad(now.getHours())}${pad(now.getMinutes())}${pad(now.getSeconds())}.json`;
+            downloadJSON(json, filename);
+            document.getElementById('bgstatsExportModal').style.display = 'none';
+            _bgstatsExportEntries = [];
+        }
+
+        function buildBGStatsJSON(entries) {
+            // Tablas de referencia: juegos y jugadores únicos
+            const gamesMap = new Map();   // gameName → {id, uuid, name, noPoints}
+            const playersMap = new Map(); // playerName → {id, uuid, name}
+            let gameIdCounter = 1;
+            let playerIdCounter = 1;
+
+            const getGame = (name) => {
+                if (!gamesMap.has(name)) {
+                    gamesMap.set(name, { id: gameIdCounter++, uuid: crypto.randomUUID(), name });
+                }
+                return gamesMap.get(name);
+            };
+            const getPlayer = (name) => {
+                if (!playersMap.has(name)) {
+                    playersMap.set(name, { id: playerIdCounter++, uuid: crypto.randomUUID(), name });
+                }
+                return playersMap.get(name);
+            };
+
+            // Pre-registrar todos los jugadores y juegos
+            entries.forEach(entry => {
+                getGame(entry.gameName);
+                (entry.results || []).forEach(r => getPlayer(r.player));
+            });
+
+            // Determinar noPoints por juego (true si todos los scores de ese juego son null)
+            const gameAllNull = new Map();
+            entries.forEach(entry => {
+                const hasScore = (entry.results || []).some(r => r.score !== null && r.score !== undefined);
+                if (!gameAllNull.has(entry.gameName)) gameAllNull.set(entry.gameName, !hasScore);
+                else if (hasScore) gameAllNull.set(entry.gameName, false);
+            });
+
+            const now = new Date();
+            const pad = n => String(n).padStart(2, '0');
+            const nowStr = `${now.getFullYear()}-${pad(now.getMonth()+1)}-${pad(now.getDate())} ${pad(now.getHours())}:${pad(now.getMinutes())}:${pad(now.getSeconds())}`;
+
+            // Convertir fecha BGTime "DD/MM/YY" → "YYYY-MM-DD 00:00:00"
+            const toPlayDate = (dateStr) => {
+                if (!dateStr) return nowStr;
+                const parts = dateStr.split('/');
+                if (parts.length !== 3) return nowStr;
+                const [d, m, y] = parts;
+                return `20${y}-${pad(parseInt(m))}-${pad(parseInt(d))} 00:00:00`;
+            };
+
+            // Construir plays
+            const plays = entries.map(entry => {
+                const game = getGame(entry.gameName);
+                const playDate = toPlayDate(entry.date);
+
+                // Ordenar results por score desc para asignar rank (null scores al final, orden original)
+                const noPoints = gameAllNull.get(entry.gameName);
+                const ranked = [...(entry.results || [])].map((r, i) => ({ ...r, _origIdx: i }));
+                if (!noPoints) {
+                    ranked.sort((a, b) => {
+                        if (a.score === null && b.score === null) return 0;
+                        if (a.score === null) return 1;
+                        if (b.score === null) return -1;
+                        return b.score - a.score;
+                    });
+                }
+
+                // Construir seatOrder desde entry.players (orden en mesa)
+                const seatOrderMap = new Map();
+                (entry.players || []).forEach((name, idx) => seatOrderMap.set(name, idx + 1));
+
+                const playerScores = ranked.map((r, rankIdx) => {
+                    const player = getPlayer(r.player);
+                    return {
+                        score: r.score !== null && r.score !== undefined ? String(r.score) : '',
+                        winner: rankIdx === 0,
+                        newPlayer: false,
+                        startPlayer: false,
+                        playerRefId: player.id,
+                        rank: rankIdx + 1,
+                        seatOrder: seatOrderMap.get(r.player) || (r._origIdx + 1),
+                        metaData: `{"scoreUuid":"${crypto.randomUUID()}"}`
+                    };
+                });
+
+                // Duración: suma de tiempos del timer (si se usó)
+                let durationMin = 0;
+                if (entry.usedTimer && Array.isArray(entry.playerTotalTimes) && entry.playerTotalTimes.length > 0) {
+                    const totalSec = entry.playerTotalTimes.reduce((s, t) => s + (t || 0), 0);
+                    durationMin = Math.round(totalSec / 60);
+                }
+
+                return {
+                    uuid: crypto.randomUUID(),
+                    modificationDate: nowStr,
+                    entryDate: nowStr,
+                    playDate,
+                    usesTeams: false,
+                    durationMin,
+                    ignored: false,
+                    manualWinner: false,
+                    rounds: entry.numRounds || 0,
+                    bggId: 0,
+                    importPlayId: 0,
+                    scoresheet: '',
+                    locationRefId: 0,
+                    gameRefId: game.id,
+                    board: '',
+                    comments: '',
+                    rating: 0,
+                    nemestatsId: 0,
+                    scoringSetting: 0,
+                    metaData: '{}',
+                    playerScores,
+                    expansionPlays: []
+                };
+            });
+
+            // Construir arrays de games y players
+            const now2 = nowStr;
+            const games = [...gamesMap.values()].map(g => ({
+                uuid: g.uuid,
+                id: g.id,
+                name: g.name,
+                modificationDate: now2,
+                cooperative: false,
+                highestWins: true,
+                noPoints: gameAllNull.get(g.name) || false,
+                usesTeams: false,
+                urlThumb: '',
+                urlImage: '',
+                bggName: '',
+                bggYear: 0,
+                bggId: 0,
+                designers: '',
+                metaData: '{}',
+                isBaseGame: 1,
+                isExpansion: 0,
+                rating: 0,
+                minPlayerCount: 0,
+                maxPlayerCount: 0,
+                minPlayTime: 0,
+                maxPlayTime: 0,
+                minAge: 0,
+                preferredImage: 0,
+                previouslyPlayedAmount: 0,
+                copies: []
+            }));
+
+            const players = [...playersMap.values()].map(p => ({
+                uuid: p.uuid,
+                id: p.id,
+                name: p.name,
+                isAnonymous: false,
+                modificationDate: now2,
+                bggUsername: '',
+                metaData: '{}',
+                lastBggChange: now2
+            }));
+
+            // meRefId: buscar el jugador que coincida con el perfil actual
+            const myNickname = window._currentProfile?.nickname || null;
+            let meRefId = 0;
+            if (myNickname && playersMap.has(myNickname)) {
+                meRefId = playersMap.get(myNickname).id;
+            }
+
+            return {
+                plays,
+                games,
+                players,
+                locations: [],
+                tags: [],
+                groups: [],
+                challenges: [],
+                deletedObjects: [],
+                userInfo: {
+                    meRefId,
+                    bggUsername: '',
+                    exportDate: now2,
+                    appVersion: 'BGTime',
+                    systemVersion: '',
+                    device: ''
+                }
+            };
+        }
+
+        function downloadJSON(obj, filename) {
+            const blob = new Blob([JSON.stringify(obj, null, 2)], { type: 'application/json' });
+            const a = document.createElement('a');
+            a.href = URL.createObjectURL(blob);
+            a.download = filename;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(a.href);
+        }
+
+        // ── Fin Exportar a BGStats ─────────────────────────────────────────
+
         let _pendingDeletePlayerIndex = null;
 
         function deleteFrecuentPlayer(index) {
