@@ -3545,6 +3545,7 @@
         function showBGStatsStep2() {
             if (_bgstatsPreviewEntries.length === 0) return;
 
+            const myNickname = window._currentProfile?.nickname || null;
             const friends = (_friends || []).map(f => f.nickname).filter(Boolean);
             const frecuent = getFrecuentPlayers() || [];
 
@@ -3592,6 +3593,20 @@
                 defaultOpt.value = '';
                 defaultOpt.textContent = '(Sin cambios)';
                 select.appendChild(defaultOpt);
+
+                if (myNickname) {
+                    const group = document.createElement('optgroup');
+                    group.label = 'Yo';
+                    const opt = document.createElement('option');
+                    opt.value = myNickname;
+                    opt.textContent = myNickname;
+                    if (myNickname.toLowerCase() === name.toLowerCase()) {
+                        opt.selected = true;
+                        _bgstatsPlayerMapping[name] = myNickname;
+                    }
+                    group.appendChild(opt);
+                    select.appendChild(group);
+                }
 
                 if (friends.length > 0) {
                     const group = document.createElement('optgroup');
