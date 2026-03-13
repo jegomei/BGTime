@@ -396,20 +396,32 @@
         </div>
 
         <!-- Modal: Detalle de partida del historial -->
-        <!-- Modal: Previsualización importación BGStats -->
+        <!-- Modal: Importación BGStats (2 pasos) -->
         <div id="bgstatsPreviewModal" style="display:none;position:fixed;inset:0;z-index:2000;background:rgba(0,0,0,0.55);align-items:center;justify-content:center;padding:16px;" onclick="closeBGStatsPreviewModal(event)">
             <div style="background:var(--container-bg);border-radius:16px;max-width:520px;width:100%;max-height:85vh;display:flex;flex-direction:column;box-shadow:0 8px 40px rgba(0,0,0,0.4);animation:modalIn 0.18s ease;">
+                <!-- Cabecera compartida -->
                 <div style="display:flex;justify-content:space-between;align-items:center;padding:18px 16px 14px;border-bottom:1px solid var(--border-color);flex-shrink:0;">
                     <div>
-                        <h2 style="margin:0;font-size:17px;color:var(--text-primary);">Importar desde BGStats</h2>
+                        <h2 id="bgstatsModalTitle" style="margin:0;font-size:17px;color:var(--text-primary);">Importar desde BGStats</h2>
                         <p id="bgstatsPreviewSubtitle" style="margin:3px 0 0;font-size:13px;color:var(--text-secondary);"></p>
                     </div>
                     <button onclick="document.getElementById('bgstatsPreviewModal').style.display='none'" style="background:none;border:none;cursor:pointer;color:var(--text-secondary);min-height:unset;padding:4px 8px;margin:0;"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button>
                 </div>
-                <div id="bgstatsPreviewList" style="overflow-y:auto;flex:1;padding:4px 12px;"></div>
-                <div style="padding:14px 16px;border-top:1px solid var(--border-color);display:flex;gap:10px;flex-shrink:0;">
-                    <button class="secondary" onclick="document.getElementById('bgstatsPreviewModal').style.display='none'" style="flex:1;margin:0;">Cancelar</button>
-                    <button id="bgstatsConfirmBtn" onclick="confirmBGStatsImport()" style="flex:1;margin:0;"></button>
+                <!-- Paso 1: previsualización de partidas -->
+                <div id="bgstatsStep1" style="display:flex;flex-direction:column;flex:1;min-height:0;">
+                    <div id="bgstatsPreviewList" style="overflow-y:auto;flex:1;padding:4px 12px;"></div>
+                    <div style="padding:14px 16px;border-top:1px solid var(--border-color);display:flex;gap:10px;flex-shrink:0;">
+                        <button class="secondary" onclick="document.getElementById('bgstatsPreviewModal').style.display='none'" style="flex:1;margin:0;">Cancelar</button>
+                        <button id="bgstatsContinueBtn" onclick="showBGStatsStep2()" style="flex:1;margin:0;"></button>
+                    </div>
+                </div>
+                <!-- Paso 2: asignar jugadores -->
+                <div id="bgstatsStep2" style="display:none;flex-direction:column;flex:1;min-height:0;">
+                    <div id="bgstatsPlayerMappingList" style="overflow-y:auto;flex:1;padding:14px 16px;"></div>
+                    <div style="padding:14px 16px;border-top:1px solid var(--border-color);display:flex;gap:10px;flex-shrink:0;">
+                        <button class="secondary" onclick="showBGStatsStep1()" style="flex:1;margin:0;">Atrás</button>
+                        <button onclick="confirmBGStatsImport()" style="flex:1;margin:0;">Importar</button>
+                    </div>
                 </div>
             </div>
         </div>
