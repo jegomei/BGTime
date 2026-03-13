@@ -3395,6 +3395,103 @@
             renderFrecuentPlayersList();
         }
 
+        // ── Importar desde BGStats ──────────────────────────────────────
+        function importFromBGStats(file) {
+            if (!file) return;
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                try {
+                    const data = JSON.parse(e.target.result);
+                    if (!data.plays || !data.games || !data.players) {
+                        showBGStatsImportStatus('error', 'El archivo no parece ser una exportación válida de BGStats.');
+                        return;
+                    }
+
+                    const gamesMap = Object.fromEntries(data.games.map(g => [g.id, g]));
+                    const playersMap = Object.fromEntries(data.players.map(p => [p.id, p]));
+
+                    const history = getHistory();
+                    const existingUuids = new Set(history.map(e => e.bgstatsUuid).filter(Boolean));
+
+                    const newEntries = [];
+                    let skipped = 0;
+
+                    data.plays.forEach((play, index) => {
+                        if (existingUuids.has(play.uuid)) { skipped++; return; }
+                        const game = gamesMap[play.gameRefId];
+                        if (!game) return;
+
+                        // 'YYYY-MM-DD HH:MM:SS' → 'DD/MM/YY'
+                        const [datePart] = play.playDate.split(' ');
+                        const [y, m, d] = datePart.split('-');
+                        const dateStr = `${d}/${m}/${y.slice(2)}`;
+
+                        const sorted = [...play.playerScores].sort((a, b) => {
+                            if (a.winner !== b.winner) return a.winner ? -1 : 1;
+                            return (a.rank || 99) - (b.rank || 99);
+                        });
+                        const results = sorted.map(ps => ({
+                            player: playersMap[ps.playerRefId]?.name || `Jugador ${ps.playerRefId}`,
+                            score: ps.score !== '' && ps.score != null ? parseFloat(ps.score) : null
+                        }));
+
+                        const playersBySeat = [...play.playerScores]
+                            .sort((a, b) => (a.seatOrder || 0) - (b.seatOrder || 0))
+                            .map(ps => playersMap[ps.playerRefId]?.name || `Jugador ${ps.playerRefId}`);
+
+                        newEntries.push({
+                            id: Date.parse(play.playDate) + index,
+                            date: dateStr,
+                            gameName: game.name,
+                            emoji: '🎲',
+                            results,
+                            scoringType: 'rounds',
+                            roundScoringMode: 'all_at_end',
+                            players: playersBySeat,
+                            numRounds: play.rounds || 0,
+                            targetScore: 0,
+                            roundScores: [], items: [], itemScores: [],
+                            roundItems: [], roundItemScores: [],
+                            usedTimer: false,
+                            orderedPlayers: [], playerTotalTimes: [],
+                            bgstatsUuid: play.uuid
+                        });
+                    });
+
+                    if (newEntries.length === 0) {
+                        const msg = skipped > 0
+                            ? `Todas las partidas ya estaban importadas (${skipped}).`
+                            : 'No se encontraron partidas en el archivo.';
+                        showBGStatsImportStatus('info', msg);
+                        return;
+                    }
+
+                    newEntries.sort((a, b) => b.id - a.id);
+                    const merged = [...newEntries, ...history];
+                    const limit = window._fbIsLoggedIn?.() ? 50 : 5;
+                    saveHistory(merged.slice(0, limit));
+
+                    if (window._fbSaveEntry) newEntries.forEach(entry => window._fbSaveEntry(entry));
+
+                    const skippedMsg = skipped > 0 ? ` (${skipped} ya existían)` : '';
+                    const limitMsg = merged.length > limit ? ` Se ha alcanzado el límite de ${limit} partidas.` : '';
+                    showBGStatsImportStatus('success', `${newEntries.length} partidas importadas.${skippedMsg}${limitMsg}`);
+
+                } catch (err) {
+                    showBGStatsImportStatus('error', 'Error al leer el archivo. Asegúrate de que es un JSON de BGStats válido.');
+                }
+            };
+            reader.readAsText(file);
+        }
+
+        function showBGStatsImportStatus(type, msg) {
+            const el = document.getElementById('bgstatsImportStatus');
+            if (!el) return;
+            const colors = { success: '#22c55e', error: '#ef4444', info: '#94a3b8' };
+            el.style.color = colors[type] || colors.info;
+            el.textContent = msg;
+        }
+
         let _pendingDeletePlayerIndex = null;
 
         function deleteFrecuentPlayer(index) {
