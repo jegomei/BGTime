@@ -2418,7 +2418,7 @@
 
 
         function renderHistoryList(showAll = false) {
-            const history = getHistory();
+            const history = getHistory().slice().sort((a, b) => b.id - a.id);
             const container = document.getElementById('historyContainer');
             container.innerHTML = '';
 
