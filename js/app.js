@@ -3396,6 +3396,8 @@
         }
 
         // ── Importar desde BGStats ──────────────────────────────────────
+        let _bgstatsPreviewEntries = [];
+
         function importFromBGStats(file) {
             if (!file) return;
             const reader = new FileReader();
@@ -3467,21 +3469,87 @@
                     }
 
                     newEntries.sort((a, b) => b.id - a.id);
-                    const merged = [...newEntries, ...history];
-                    const limit = window._fbIsLoggedIn?.() ? 50 : 5;
-                    saveHistory(merged.slice(0, limit));
-
-                    if (window._fbSaveEntry) newEntries.forEach(entry => window._fbSaveEntry(entry));
-
-                    const skippedMsg = skipped > 0 ? ` (${skipped} ya existían)` : '';
-                    const limitMsg = merged.length > limit ? ` Se ha alcanzado el límite de ${limit} partidas.` : '';
-                    showBGStatsImportStatus('success', `${newEntries.length} partidas importadas.${skippedMsg}${limitMsg}`);
+                    _bgstatsPreviewEntries = newEntries;
+                    _openBGStatsPreviewModal(skipped);
 
                 } catch (err) {
                     showBGStatsImportStatus('error', 'Error al leer el archivo. Asegúrate de que es un JSON de BGStats válido.');
                 }
             };
             reader.readAsText(file);
+        }
+
+        function _openBGStatsPreviewModal(skipped) {
+            _renderBGStatsPreviewList(skipped);
+            document.getElementById('bgstatsPreviewModal').style.display = 'flex';
+        }
+
+        function closeBGStatsPreviewModal(e) {
+            const modal = document.getElementById('bgstatsPreviewModal');
+            if (e && e.target !== modal) return;
+            modal.style.display = 'none';
+        }
+
+        function _renderBGStatsPreviewList(skipped) {
+            const n = _bgstatsPreviewEntries.length;
+            const subtitle = document.getElementById('bgstatsPreviewSubtitle');
+            const confirmBtn = document.getElementById('bgstatsConfirmBtn');
+            const list = document.getElementById('bgstatsPreviewList');
+
+            const skippedNote = skipped > 0 ? ` · ${skipped} ya importada${skipped !== 1 ? 's' : ''}` : '';
+            subtitle.textContent = `${n} partida${n !== 1 ? 's' : ''} para importar${skippedNote}`;
+            confirmBtn.textContent = `Importar (${n})`;
+            confirmBtn.disabled = n === 0;
+
+            const crownSvg = '<svg xmlns="http://www.w3.org/2000/svg" width="10" height="10" viewBox="0 0 24 24" fill="currentColor" stroke="none"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>';
+            const trashSvg = '<svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/></svg>';
+
+            if (n === 0) {
+                list.innerHTML = '<p style="text-align:center;color:var(--text-secondary);padding:28px 0;font-size:14px;">No quedan partidas para importar.</p>';
+                return;
+            }
+
+            list.innerHTML = _bgstatsPreviewEntries.map((entry, i) => {
+                const winner = entry.results[0];
+                const winnerScore = winner.score !== null ? ` · ${winner.score} pts` : '';
+                const winnerBadge = `<span class="stats-game-winner-badge">${crownSvg}${winner.player}${winnerScore}</span>`;
+                const others = entry.results.slice(1).map(r =>
+                    r.score !== null ? `${r.player} ${r.score}` : r.player
+                ).join(' · ');
+                const othersHtml = others ? `<span style="color:var(--text-secondary)">${others}</span>` : '';
+                return `
+                <div class="stats-game-row" style="padding-right:4px;">
+                    <span class="stats-game-emoji">${entry.emoji}</span>
+                    <div class="stats-game-info">
+                        <div class="stats-game-name">${entry.gameName}</div>
+                        <div class="stats-game-meta">
+                            <span style="color:var(--text-muted)">${entry.date}</span>
+                            ${winnerBadge}
+                            ${othersHtml}
+                        </div>
+                    </div>
+                    <button onclick="removeBGStatsPreviewEntry(${i})" title="Eliminar" style="background:none;box-shadow:none;border:none;cursor:pointer;color:var(--text-secondary);padding:8px;min-height:unset;margin:0;flex-shrink:0;">${trashSvg}</button>
+                </div>`;
+            }).join('');
+        }
+
+        function removeBGStatsPreviewEntry(index) {
+            _bgstatsPreviewEntries.splice(index, 1);
+            _renderBGStatsPreviewList(0);
+        }
+
+        function confirmBGStatsImport() {
+            if (_bgstatsPreviewEntries.length === 0) return;
+            const history = getHistory();
+            const merged = [..._bgstatsPreviewEntries, ...history];
+            const limit = window._fbIsLoggedIn?.() ? 50 : 5;
+            saveHistory(merged.slice(0, limit));
+            if (window._fbSaveEntry) _bgstatsPreviewEntries.forEach(entry => window._fbSaveEntry(entry));
+            const n = _bgstatsPreviewEntries.length;
+            const limitMsg = merged.length > limit ? ` (límite de ${limit} partidas alcanzado)` : '';
+            showBGStatsImportStatus('success', `${n} partida${n !== 1 ? 's' : ''} importada${n !== 1 ? 's' : ''} correctamente.${limitMsg}`);
+            document.getElementById('bgstatsPreviewModal').style.display = 'none';
+            _bgstatsPreviewEntries = [];
         }
 
         function showBGStatsImportStatus(type, msg) {
