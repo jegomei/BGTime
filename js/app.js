@@ -3241,11 +3241,6 @@
                 err.style.display = '';
                 return;
             }
-            if (getHistory().some(e => normStr(e.gameName) === normName)) {
-                err.textContent = 'Ya hay un juego en el historial con ese nombre.Añádelo a tu biblioteca desde ahí.';
-                err.style.display = '';
-                return;
-            }
             closeAddGameSheet();
             document.getElementById('templateSelect').value = '';
             document.getElementById('gameName').value = name;
@@ -4089,16 +4084,6 @@
                 document.getElementById('tplFormError').textContent = 'Ya hay un juego en la biblioteca con ese nombre.';
                 return;
             }
-            let excludedNorm = null;
-            if (_editingTemplateIndex !== null) {
-                excludedNorm = normStr(allTpls[_editingTemplateIndex].name);
-            } else if (_pendingHistoryTpl !== null) {
-                excludedNorm = normName;
-            }
-            if (getHistory().some(e => { const n = normStr(e.gameName); return n === normName && n !== excludedNorm; })) {
-                document.getElementById('tplFormError').textContent = 'Ya hay un juego en el historial con ese nombre.';
-                return;
-            }
             const maxP = parseInt(document.getElementById('tplMaxPlayers').value);
             const templates = getCustomTemplates();
             const currentTpl = _editingTemplateIndex !== null ? templates[_editingTemplateIndex] : null;
@@ -4278,23 +4263,6 @@
                 : allTpls;
             if (otherTpls.some(t => normStr(t.name) === normName)) {
                 document.getElementById('tplFormError').textContent = 'Ya hay un juego en la biblioteca con ese nombre.';
-                return;
-            }
-            // Calcular el nombre a excluir del chequeo de historial:
-            // - Al editar: excluir el nombre actual de la plantilla (es su propio historial)
-            // - Al crear desde historial: excluir el nombre pre-rellenado (proviene del historial)
-            // - Al crear desde cero: sin exclusión → bloquear si ya existe en historial
-            let excludedNorm = null;
-            if (_editingTemplateIndex !== null) {
-                excludedNorm = normStr(allTpls[_editingTemplateIndex].name);
-            } else if (_pendingHistoryTpl !== null) {
-                excludedNorm = normName;
-            }
-            if (getHistory().some(e => {
-                const n = normStr(e.gameName);
-                return n === normName && n !== excludedNorm;
-            })) {
-                document.getElementById('tplFormError').textContent = 'Ya hay un juego en el historial con ese nombre.';
                 return;
             }
             if (!_tplScoringConfigured) {
