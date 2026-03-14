@@ -629,12 +629,10 @@
         .library-game-item-emoji {
             width: 42px;
             height: 42px;
-            border-radius: 12px;
-            background: var(--table-row-alt);
             display: flex;
             align-items: center;
             justify-content: center;
-            font-size: 22px;
+            font-size: 36px;
             flex-shrink: 0;
         }
         .library-game-item-name {
