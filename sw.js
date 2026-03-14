@@ -1,6 +1,6 @@
 // BGTime Service Worker
 // Cambia este número de versión para forzar actualización del caché
-const CACHE_VERSION = 'bgtime-v1.0.18';
+const CACHE_VERSION = 'bgtime-v1.0.19';
 
 const STATIC_ASSETS = [
   '/BGTime/',
