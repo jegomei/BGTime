@@ -1,4 +1,4 @@
-        const APP_VERSION = '1.0.19';
+        const APP_VERSION = '1.0.20';
 
         // ── Claves de localStorage ────────────────────────────────────────────
         // Centralizar aquí evita typos y facilita renombrar en un solo lugar.
