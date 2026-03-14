@@ -2431,6 +2431,9 @@
             flex-direction: column;
             gap: 10px;
         }
+        .game-detail-body > .history-card {
+            flex-shrink: 0;
+        }
         /* Emoji editable */
         .game-detail-emoji-wrap {
             position: relative;
